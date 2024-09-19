@@ -1,5 +1,4 @@
 import argparse
-import json
 import csv
 
 class BPTreeNode:
@@ -31,14 +30,14 @@ class BPlusTree:
 
     def insert(self, key, value):
         root = self.root
-        print(f"\nInserting key {key} into tree...")
+        #print(f"\nInserting key {key} into tree...")
 
         # 리프 노드까지 찾아가서 삽입
         self.insert_non_full(root, key, value)
 
         # 루트가 가득 차면 루트를 분할
         if len(root.keys) > root.max_keys:
-            print(f"Root node is full after insertion, splitting root...")
+            #print(f"Root node is full after insertion, splitting root...")
             new_root = BPTreeNode(leaf=False, b=self.b)
             new_root.children.append(root)
             root.parent = new_root
@@ -46,10 +45,10 @@ class BPlusTree:
             self.root = new_root
         
         # 삽입 후 트리 상태 출력
-        print("\nTree after insertion:")
-        self.print_tree(self.root)
+        #print("\nTree after insertion:")
+        #self.print_tree(self.root)
 
-        print_leaf_nodes(self)
+        #print_leaf_nodes(self)
 
     def insert_non_full(self, node, key, value):
         """리프 노드까지 내려가서 먼저 키를 삽입한 후, 분할을 처리"""
@@ -65,17 +64,17 @@ class BPlusTree:
 
             node.keys.append(None)  # 공간 확보
             while i >= 0 and key < node.keys[i][0]:
-                print(f"Moving key {node.keys[i][0]} to the right")
+                #print(f"Moving key {node.keys[i][0]} to the right")
                 node.keys[i + 1] = node.keys[i]
                 i -= 1
             node.keys[i + 1] = (key, value)  # 새로운 키-값 삽입
 
-            print(f"Inserted key {key} in leaf node: {node.keys}")
+            #print(f"Inserted key {key} in leaf node: {node.keys}")
 
         elif not node.leaf:
             # 내부 노드에서 적절한 자식으로 이동
             while i >= 0 and key < node.keys[i]:
-                print(f"Checking key {node.keys[i]}")
+                #print(f"Checking key {node.keys[i]}")
                 i -= 1
             i += 1
             self.insert_non_full(node.children[i], key, value)  # 재귀적으로 내려감
@@ -117,7 +116,7 @@ class BPlusTree:
             for child in left_child.children:
                 child.parent = left_child
             
-            print(f"Internal node split. Left node: {left_child.keys}, Right node: {right_child.keys}, Parent: {node_parent.keys}")
+            #print(f"Internal node split. Left node: {left_child.keys}, Right node: {right_child.keys}, Parent: {node_parent.keys}")
 
         else:
             # 리프 노드일 경우
@@ -133,12 +132,12 @@ class BPlusTree:
             right_child.next_leaf = left_child.next_leaf
             left_child.next_leaf = right_child
 
-            print(f"Leaf node split. Left node: {left_child.keys}, Right node: {right_child.keys}, Parent: {node_parent.keys}")
+            #print(f"Leaf node split. Left node: {left_child.keys}, Right node: {right_child.keys}, Parent: {node_parent.keys}")
 
 
         # 분할 후 트리 상태 출력
-        print("\nTree after split:")
-        self.print_tree(self.root)
+        #print("\nTree after split:")
+        #self.print_tree(self.root)
 
     def search(self, key):
             """주어진 키를 트리에서 검색"""
@@ -203,11 +202,14 @@ class BPlusTree:
                 if i > 0:  # 첫 번째 key가 아니면 바로 삭제
                     del current_node.keys[i]
                     print(f"Deleted key {key} from leaf node")
-                    self._balance_after_deletion(current_node)
+                    self._balance_after_deletion(current_node, key)
                     print("\nTree after deletion:")
                     self.print_tree(self.root)
+                    self.save_to_file("index.dat")
+
                 else:
                     # Case 2: 삭제할 key가 리프 노드의 첫 번째 key인 경우
+                    print(f"Key {key} found in leaf node")
                     self._delete_key_from_index(key, current_node, node_parent, parent_index)
                     #print("After deleting key from leaf node:")
                     #self.print_tree(self.root)
@@ -215,6 +217,8 @@ class BPlusTree:
                     self._delete_from_internal_nodes(self.root, key)
                     print("\nTree after deletion:")
                     self.print_tree(self.root)
+                    self.save_to_file("index.dat")
+
                 return
 
     
@@ -223,140 +227,213 @@ class BPlusTree:
         """내부 노드에서 주어진 key 삭제"""
         # root부터 시작하여 key가 있는 내부 노드를 찾음
         current_node = node
-        while current_node:
+
+        while not current_node.leaf:
             # 내부 노드에서 key가 있는지 확인
+            #print("Tree after deletion:")
+            #self.print_tree(self.root)
             for i in range(len(current_node.keys)):
                 if current_node.keys[i] == key:
+                    if current_node.leaf:
+                        del current_node.keys[i]
+                        return
                     # key를 찾았을 경우, 오른쪽 자식의 가장 작은 값으로 대체
                     smallest_key = self._find_smallest_key(current_node.children[i + 1])
                     print(f"Found key {key} in internal node, replacing with smallest key {smallest_key} from right child")
                     current_node.keys[i] = smallest_key
-
                     return
-            # 다음 자식 노드로 이동
-            current_node = current_node.children[len(current_node.children) - 1] if current_node.children else None
 
-        print(f"Key {key} not found in internal nodes")
+            # key의 크기를 비교해서 적절한 자식 노드로 이동
+            i = 0
+            while i < len(current_node.keys) and key > current_node.keys[i]:
+                i += 1
+            
+            # 해당 key가 있을 수 있는 자식 노드로 이동
+            current_node = current_node.children[i] if current_node.children else None
+
+        #print(f"Key {key} not found in internal nodes")
 
     def _find_smallest_key(self, node):
-        """오른쪽 자식의 서브트리에서 가장 작은 key를 찾음"""
+        """주어진 노드에서 가장 작은 키를 찾음 (리프 노드로 내려감)"""
         current_node = node
         while not current_node.leaf:
-            current_node = current_node.children[0]  # 가장 왼쪽 자식으로 내려감
+            current_node = current_node.children[0]  # 왼쪽 자식으로 계속 내려감
+        return current_node.keys[0][0]  # 리프 노드에서 가장 작은 키 반환
 
-        # 리프 노드에서 가장 작은 key를 반환
-        return current_node.keys[0][0]  # key만 반환 (key, value 형태에서 key를 반환)
-    
     def _delete_key_from_index(self, key, leaf_node, node_parent, parent_index):
         """리프 노드의 첫 번째 key 삭제 처리 및 index 업데이트"""
         # 리프 노드에서 첫 번째 key 삭제
         del leaf_node.keys[0]
-        print(f"Deleted first key {key} from leaf node")
-
+        #print(f"Deleted first key {key} from leaf node")
+        #print("before balance: node_parent.keys: ", node_parent.keys)
+        #print("node keys: ", leaf_node.keys)
         # 리프 노드 병합 또는 재분배 처리
-        self._balance_after_deletion(leaf_node)
+        self._balance_after_deletion(leaf_node, key)
         
         # index 내의 key를 inorder successor로 변경
-        if node_parent and parent_index > 0 and leaf_node.keys:
+        #print("leaf_node.keys: ", leaf_node.keys)
+        #print("node parent children: ", node_parent.children[0].keys)
 
-            node_parent.keys[parent_index - 1] = leaf_node.keys[0][0]  # 첫 번째 key로 대체
-            print(f"Updated index with key {leaf_node.keys[0][0]}")
+        #print("node parent children: ", node_parent.children[1].keys)
+        if node_parent and parent_index > 0 and leaf_node.keys and leaf_node.leaf is True:
+
+            node_parent.keys[parent_index - 1] = node_parent.children[parent_index].keys[0][0]  # 첫 번째 key로 대체
+            #print(f"Updated index with key {leaf_node.keys[0][0]}")
 
 
-    def _balance_after_deletion(self, node):
+    def _balance_after_deletion(self, node, key):
         """삭제 후 균형을 맞추기 위한 병합 및 재분배 수행"""
         min_keys = (self.b - 1) // 2
-
+        #print(f"Balancing node: {node.keys}")
         # 노드에 충분한 키가 남아 있으면 아무 것도 하지 않음
-        if len(node.keys) >= min_keys:
+        if len(node.keys) >= min_keys and node != self.root:
             return
-
+        
         # 부모 노드 가져오기
         node_parent = node.parent
+        #print("node_parent: ", node_parent.keys)
         if not node_parent:
         # 루트 노드 처리: 루트가 내부 노드인데 자식이 하나만 남으면 자식을 새로운 루트로 설정
             if node == self.root and len(node.children) == 1:
-                self.root = node.children[0]
-                self.root.parent = None
+                #print("Root node has single child. Replacing root with child...")
+                if not node.children:
+                    del node.keys[0]
+                    return
+                single_child = node.children[0]
+                # 루트 노드의 키를 자식에게 넘김
+                single_child.keys = node.keys + single_child.keys  # 루트의 키와 자식의 키 병합
+
+                # 자식을 새로운 루트로 설정
+                self.root = single_child
+                self.root.parent = None  # 부모 관계 제거
             return
         parent_index = node_parent.children.index(node)
 
         # 왼쪽 형제 노드 가져오기
         left_sibling = None if parent_index == 0 else node_parent.children[parent_index - 1]
+        '''if left_sibling:
+            print(f"Left sibling: {left_sibling.keys}")
+        else: print("No left sibling")'''
         right_sibling = None if parent_index == len(node_parent.children) - 1 else node_parent.children[parent_index + 1]
+        '''if right_sibling:
+            print(f"Right sibling: {right_sibling.keys}")
+        else: print("No right sibling")'''
 
-        # 왼쪽 형제에서 재분배 또는 병합
+        # 왼쪽 형제에서 재분배 또는 병합 (왼쪽 형제한테 지원을 받음)
         if left_sibling and len(left_sibling.keys) > min_keys:
             if not node.leaf:
-                node.keys.insert(0, node_parent.keys[parent_index - 1])
-                node.children.insert(0, left_sibling.children.pop())
+                #print("parent_index", parent_index)
+                #print("node parent keys: ", node_parent.keys[parent_index-1])
+                node.keys.insert(0, node_parent.keys[parent_index-1])
+
+                #print("node keys: ", node.keys)
+                child_node = left_sibling.children.pop()
+                node.children.insert(0, child_node)
+
+                child_node.parent = node
+
+                #print("left_sibling.keys.pop(): ",left_sibling.keys.pop())
                 node_parent.keys[parent_index - 1] = left_sibling.keys.pop()
             if node.leaf:
                 node.keys.insert(0, left_sibling.keys.pop())
                 node_parent.keys[parent_index - 1] = node.keys[0][0]
-            print(f"Rebalanced with left sibling")
+            #print(f"Rebalanced with left sibling")
         
-        # 오른쪽 형제에서 재분배 또는 병합
+        # 오른쪽 형제에서 재분배 또는 병합 (오른쪽 형제한테 지원을 받음)
         elif right_sibling and len(right_sibling.keys) > min_keys:
             if not node.leaf:
                 node.keys.append(node_parent.keys[parent_index])
-                node.children.append(right_sibling.children.pop(0))
+                #print("right_sibling.children.pop(0): ", right_sibling.children.pop(0).keys)
+                # 오른쪽 형제에서 자식을 가져와서 현재 노드에 추가하고, 부모 설정을 업데이트
+                child_node = right_sibling.children.pop(0)
+                node.children.append(child_node)
+                
+                child_node.parent = node
+                
+                #print("node.keys: ", node.keys)
+                #print("node children0: ", node.children[0].keys)
+                #print("node children1: ", node.children[1].keys)
+                #print("print tree")
+                #self.print_tree(self.root)
                 node_parent.keys[parent_index] = right_sibling.keys.pop(0)
-            if node.leaf:
+            if node.leaf: #?? 여기도 이상함. node에다가 직접 붙이는게 아니라 부모꺼 붙여야함.
                 node.keys.append(right_sibling.keys.pop(0))
                 node_parent.keys[parent_index] = right_sibling.keys[0][0]
-            print(f"Rebalanced with right sibling")
+            #print(f"Rebalanced with right sibling")
 
-        # 병합 수행
+        # 병합 수행 (병합하고 부모한테 지원을 받음)
         else:
             # 왼쪽 형제와 병합
             if left_sibling and len(left_sibling.keys) + len(node.keys) <= self.b - 1:
                 # 왼쪽 형제와 병합
-                left_sibling.keys.extend(node.keys)
                 if node.leaf:
+                    left_sibling.keys.extend(node.keys)
                     left_sibling.next_leaf = node.next_leaf  # 리프 노드의 next_leaf 연결
                 else:
-                    left_sibling.children.extend(node.children)  # 내부 노드의 경우 자식도 병합
+                    left_sibling.keys.append(node_parent.keys[parent_index - 1])                
+                    left_sibling.keys.extend(node.keys)
+                    left_sibling.children.extend(node.children)
                     for child in node.children:
                         child.parent = left_sibling
-                del node_parent.children[parent_index]
-                del node_parent.keys[parent_index - 1]
-                print(f"Merged with left sibling: {left_sibling.keys}")
 
-            # 오른쪽 형제와 병합
-            elif right_sibling and len(right_sibling.keys) + len(node.keys) <= self.b - 1:
-                # 오른쪽 형제와 병합
-                node.keys.extend(right_sibling.keys)
+                            
+                # 부모 노드에서 현재 노드 삭제
+                del node_parent.children[parent_index]
+                '''if node_parent == self.root and len(self.root.keys)==1 and key != node_parent.keys[parent_index-1]:
+                    self._balance_after_deletion(node_parent, key)
+
+                else:'''
+                #if key == node_parent.keys[parent_index-1]:
+                del node_parent.keys[parent_index - 1]
+
+
+                #print(f"Merged with left sibling: {left_sibling.keys}")
+            
+            elif right_sibling and len(right_sibling.keys) + len(node.keys) <= self.b - 1:                # 오른쪽 형제와 병합
                 if node.leaf:
+                    node.keys.extend(right_sibling.keys)
                     node.next_leaf = right_sibling.next_leaf  # 리프 노드의 next_leaf 연결
                 else:
-                    node.children.extend(right_sibling.children)  # 내부 노드의 경우 자식도 병합
+                    # 현재 노드와 오른쪽 형제를 병합
+                    node.keys.append(node_parent.keys[parent_index])  # 부모의 키를 병합
+                    node.keys.extend(right_sibling.keys)
+                    node.children.extend(right_sibling.children)
                     for child in right_sibling.children:
-                        child.parent = node
+                        child.parent = node  # 부모 재설정
+
+                # 부모 노드에서 오른쪽 형제 삭제
                 del node_parent.children[parent_index + 1]
+
+                # 루트 노드 처리
+                '''if node_parent == self.root and len(self.root.keys) == 1 and key != node_parent.keys[parent_index]:
+                    self._balance_after_deletion(node_parent, key)
+                else:'''
+                    # 부모 노드에서 병합된 키 삭제
                 del node_parent.keys[parent_index]
-                print(f"Merged with right sibling: {node.keys}")
+
 
         
                 # 부모 노드 처리: 재분배 또는 병합
-            
-            # 부모 노드가 최소 키 개수 미만이면 부모도 재분배 또는 병합해야 함
-            if node_parent and len(node_parent.keys) < min_keys:
-                self._balance_after_deletion(node_parent)
-
-            if len(node_parent.keys) == 0 and node_parent != self.root:
+            '''if len(node_parent.keys) == 0 and node_parent != self.root:
                 grand_parent = node_parent.parent
                 if grand_parent:
                     parent_index = grand_parent.children.index(node_parent)
                     # 부모 노드를 삭제하고 자식을 위로 올림
                     grand_parent.children[parent_index] = node_parent.children[0]
                     node_parent.children[0].parent = grand_parent
-                    print(f"Removed internal node with single child. Updated grandparent: {grand_parent.keys}")
+                    #print(f"Removed internal node with single child. Updated grandparent: {grand_parent.keys}")
                 else:
                     # 루트가 내부 노드였고, 자식이 하나만 남은 경우
                     self.root = node_parent.children[0]
                     self.root.parent = None
-                    print(f"Root node replaced by its single child: {self.root.keys}")
+                    #print(f"Root node replaced by its single child: {self.root.keys}")
+'''
+            #print("Tree after balancing:")
+            #self.print_tree(self.root)
+            # 부모 노드가 최소 키 개수 미만이면 부모도 재분배 또는 병합해야 함
+            if node_parent and len(node_parent.keys) < min_keys:
+                self._balance_after_deletion(node_parent, key)
+
 
     def delete_from_file(self, data_file):
         """CSV 파일에서 삭제할 키들을 읽어와 트리에서 삭제"""
@@ -364,34 +441,6 @@ class BPlusTree:
             for line in f:
                 key = int(line.strip())
                 self.delete(key)
-
-
-    # def search(self, key):
-    #     current_node = self.root
-    #     # 내부 노드를 통과할 때마다 경로를 출력
-    #     while not current_node.leaf:
-    #         # 내부 노드의 키들을 출력
-    #         print(','.join(str(k) for k in current_node.keys))
-
-    #         # 키를 비교하여 내려갈 자식 노드를 결정
-    #         i = 0
-    #         while i < len(current_node.keys) and key >= current_node.keys[i]:
-    #             i += 1
-
-    #         current_node = current_node.children[i]  # 자식 노드로 이동
-
-    #     # 리프 노드에 도착한 후 해당 키를 검색
-    #     for k, v in current_node.keys:
-    #         if k == key:
-    #             print(v)  # 키에 맞는 값 출력
-    #             return
-        
-    #     # 키가 존재하지 않는 경우
-    #     print("NOT FOUND")
-
-
-
-
     
     def print_tree(self, node, level=0):
         indent = "    " * level
@@ -410,15 +459,6 @@ class BPlusTree:
 
             # 트리의 루트를 포함한 구조를 기록
             self._write_node_to_file(f, self.root)
-
-    # def load_from_file(self, filename):
-    #     """파일에서 B+ 트리 구조를 로드"""
-    #     with open(filename, 'r') as f:
-    #         # 첫 줄에서 차수 b 값을 읽음
-    #         self.b = int(f.readline().split(': ')[1])
-
-    #         # 나머지 파일에서 노드 정보를 읽어들임
-    #         self.root = self._read_node_from_file(f)
 
     def load_from_file(self, filename):
         """파일에서 B+ 트리 구조를 로드"""

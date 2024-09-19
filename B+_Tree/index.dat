@@ -1,0 +1,8 @@
+b: 3
+Internal Node: [84]
+    Internal Node: [68]
+        Leaf Node: [(20, '57455')]
+        Leaf Node: [(68, '97321')]
+    Internal Node: [86]
+        Leaf Node: [(84, '431142')]
+        Leaf Node: [(86, '67945'), (87, '984796')]
