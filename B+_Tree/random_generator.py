@@ -1,7 +1,7 @@
 import random
 
 # 100만개의 (key, value) 쌍 생성 및 index.txt 파일에 저장
-def create_index_txt_file(filename='index1.txt', num_entries=1000000):
+def create_index_txt_file(filename='input.csv', num_entries=1000000):
     try:
         with open(filename, 'w') as f:  # 텍스트 모드로 파일 열기
             generated_keys = set()  # 생성된 키를 추적하기 위한 set

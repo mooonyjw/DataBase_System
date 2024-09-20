@@ -9,7 +9,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
-            "args": ["-d", "index.dat", "data/delete.csv"],
+            "args": ["-d", "index.dat", "delete.csv"],
             "console": "integratedTerminal"
         }
     ]

@@ -1,7 +1,7 @@
 import argparse
 import json
 import csv
-
+import time
 class BPTreeNode:
     def __init__(self, leaf=True, b=None):
         self.leaf = leaf
@@ -204,8 +204,8 @@ class BPlusTree:
                     del current_node.keys[i]
                     print(f"Deleted key {key} from leaf node")
                     self._balance_after_deletion(current_node, key)
-                    print("\nTree after deletion:")
-                    self.print_tree(self.root)
+                    #print("\nTree after deletion:")
+                    #self.print_tree(self.root)
                     self.save_to_file("index.dat")
 
                 else:
@@ -216,8 +216,8 @@ class BPlusTree:
                     #self.print_tree(self.root)
                     # 내부 노드에서 key 삭제
                     self._delete_from_internal_nodes(self.root, key)
-                    print("\nTree after deletion:")
-                    self.print_tree(self.root)
+                    #print("\nTree after deletion:")
+                    #self.print_tree(self.root)
                     self.save_to_file("index.dat")
 
                 return
@@ -658,10 +658,14 @@ def main():
 
     if args.insert:
         print(f"Inserting data...")
+        start=time.time()
         index_file, data_file = args.insert
         insert_into_index(index_file, data_file)
+        end = time.time()
+        print("Time: ", end-start)
 
     if args.search:
+        
         index_file, key = args.search
         key = int(key)  # 키를 정수로 변환
 

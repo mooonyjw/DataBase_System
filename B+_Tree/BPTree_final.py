@@ -1,5 +1,7 @@
 import argparse
 import csv
+import time
+
 
 class BPTreeNode:
     def __init__(self, leaf=True, b=None):
@@ -27,46 +29,50 @@ class BPlusTree:
 
         # If root is full, split the root
         if len(root.keys) > self.b - 1:
-            #print("Root node is full after insertion, split root")
             new_root = BPTreeNode(leaf=False, b=self.b)
             new_root.children.append(root)
             root.parent = new_root
             self.split_child(new_root, 0)
             self.root = new_root
+
+    def binary_search(self, node_keys, key, is_leaf):
+        # Binary search to find the correct position to insert the key
         
+        low, high = 0, len(node_keys) - 1
+        while low <= high:
+            mid = (low + high) // 2
+            # Access key differently based on node type
+            mid_key = node_keys[mid][0] if is_leaf else node_keys[mid]
+
+            if mid_key == key:
+                raise DuplicateKeyError(f"Duplicate key insertion attempted: {key}")
+            elif mid_key < key:
+                low = mid + 1
+            else:
+                high = mid - 1
+        return low
+
     def insert_in_leaf_node(self, node, key, value):
-        # Find leaf node to insert
-        i = len(node.keys) - 1
-
         if node.leaf:
+            # Use binary search for leaf node
+            pos = self.binary_search(node.keys, key, is_leaf=True)
 
-            # Check for duplicate key
-            for k, _ in node.keys:
-                if k == key:
-                    raise DuplicateKeyError(f"Duplicate key insertion attempted: {key}")
+            # Insert the key-value pair at the correct position
+            node.keys.insert(pos, (key, value))
 
-            node.keys.append(None) 
-            while i >= 0 and key < node.keys[i][0]:
-                #print(f"Moving key {node.keys[i][0]} to the right")
-                node.keys[i + 1] = node.keys[i]
-                i -= 1
-            node.keys[i + 1] = (key, value)  # insert new key-value pair
+        else:
+            # Use binary search for internal node
+            pos = self.binary_search(node.keys, key, is_leaf=False)
 
-            #print(f"Inserted key {key} in leaf node: {node.keys}")
+            # Recursive call to insert the key into the correct child
+            self.insert_in_leaf_node(node.children[pos], key, value)
 
-        elif not node.leaf:
-            # Find leaf node to insert
-            while i >= 0 and key < node.keys[i]:
-                #print(f"Checking key {node.keys[i]}")
-                i -= 1
-            i += 1
-            self.insert_in_leaf_node(node.children[i], key, value)
+            # If child node is full after insertion, split the node
+            if len(node.children[pos].keys) > node.children[pos].b - 1:
+                self.split_child(node, pos)
+                node.children[pos].parent = node
+                node.children[pos + 1].parent = node
 
-            # If leaf node is full after insertion, split the node
-            if len(node.children[i].keys) > node.children[i].max_keys:
-                self.split_child(node, i)
-                node.children[i].parent = node
-                node.children[i + 1].parent = node
 
     def split_child(self, node_parent, index):
 
@@ -137,7 +143,7 @@ class BPlusTree:
                 return
 
         # Failed to find the key
-            print("NOT FOUND")
+        print("NOT FOUND")
 
     def range_search(self, start_key, end_key):
         # Search for keys in the given range
@@ -182,9 +188,7 @@ class BPlusTree:
                     # Case 1: Non-first key in leaf node
                     
                     del current_node.keys[i]
-                    #print("Deleted key {key} from leaf node")
                     self.balance_after_deletion(current_node, key)
-                    self.save_to_file("index.dat")
 
                 else:
                     # Case 2: First key in leaf node
@@ -194,9 +198,11 @@ class BPlusTree:
                     
                     # Delete the key from the internal nodes
                     self.delete_key_from_internal_node(self.root, key)
-                    self.save_to_file("index.dat")
 
                 return
+            
+        # If the key is not found in the leaf node, print that it doesn't exist
+        print(f"Key {key} not found in the tree.")
     
     def delete_key_from_internal_node(self, node, key):
         # Delete the key from the internal nodes
@@ -233,11 +239,6 @@ class BPlusTree:
 
         # Balance the tree after deletion
         self.balance_after_deletion(leaf_node, key)
-        
-        # Update the parent key if the first key in the leaf node is deleted
-        if node_parent and parent_index > 0 and leaf_node.keys and leaf_node.leaf is True:
-            node_parent.keys[parent_index - 1] = node_parent.children[parent_index].keys[0][0]
-
 
     def balance_after_deletion(self, node, key):
         # Balance the B+ tree after deletion
@@ -250,21 +251,19 @@ class BPlusTree:
         
         node_parent = node.parent
 
+        # Root node handling: If the root is an internal node and has a single child, merge the root with the child
         if not node_parent:
-        # 루트 노드 처리: 루트가 내부 노드인데 자식이 하나만 남으면 자식을 새로운 루트로 설정
             if node == self.root and len(node.children) == 1:
-                #print("Root node has single child. Replacing root with child...")
                 if not node.children:
                     del node.keys[0]
                     return
-                single_child = node.children[0]
-                # 루트 노드의 키를 자식에게 넘김
-                single_child.keys = node.keys + single_child.keys  # 루트의 키와 자식의 키 병합
-
-                # 자식을 새로운 루트로 설정
-                self.root = single_child
-                self.root.parent = None  # 부모 관계 제거
+                single_child = node.children[0]  # Get the single child
+                single_child.keys = node.keys + single_child.keys  # Merge the keys of the root and the child
+                self.root = single_child  # Replace the root with the child
+                self.root.parent = None  # Update the parent pointer
             return
+        
+        # Get the index of the node in the parent's children list
         parent_index = node_parent.children.index(node)
 
         # Check if the left and right siblings exist
@@ -286,8 +285,6 @@ class BPlusTree:
                 node.children.insert(0, child_node)
                 child_node.parent = node
                 node_parent.keys[parent_index - 1] = left_sibling.keys.pop()
-
-            
         
         # Rebalancing with right sibling
         elif right_sibling and len(right_sibling.keys) > min_keys:
@@ -360,10 +357,15 @@ class BPlusTree:
     def delete_from_file(self, data_file):
         # Read file and delete keys
 
+        #start = time.time()
         with open(data_file, 'r') as f:
             for line in f:
                 key = int(line.strip())
                 self.delete(key)
+        self.save_to_file("index.dat")
+
+        #end = time.time()
+        #print(f"{end - start:.5f} sec")
     
     def print_tree(self, node, level=0):
         # Print the B+ tree structure
@@ -400,8 +402,8 @@ class BPlusTree:
 
         with open(filename, 'r') as f:
             self.b = int(f.readline().split(': ')[1])
-            self.root, leaf_nodes = self._read_node_from_file(f)
-            self._restore_leaf_connections(leaf_nodes)
+            self.root, leaf_nodes = self.read_node_from_file(f)
+            self.restore_leaf_connections(leaf_nodes)
 
     def read_node_from_file(self, f, level=0, parent = None):
         # Read B+ tree structure from a file and restore the tree
@@ -470,7 +472,7 @@ def create_index_file(index_file, node_size):
 
 def insert_into_index(index_file, data_file):
     # Insert key-value pairs into the B+ tree and save the updated tree to the index file
-
+    #start = time.time()
     try:
         # Load the existing B+ tree from the index file
         tree = BPlusTree(0)  # b will be overwritten by load_from_file
@@ -491,7 +493,9 @@ def insert_into_index(index_file, data_file):
     
     # Save the updated B+ tree to the index file
     tree.save_to_file(index_file)
-    print(f"Inserted data from '{data_file}' into '{index_file}'.")
+    #end = time.time()
+    #print(f"{end - start:.5f} sec")
+
 
 def print_index_file(index_file):
     # Print the B+ tree structure from the index file
