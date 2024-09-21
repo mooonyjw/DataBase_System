@@ -194,8 +194,11 @@ class BPlusTree:
                     # Case 2: First key in leaf node
                     
                     # Delete the key from the leaf node
-                    self.delete_key_from_leaf_node(key, current_node, node_parent, parent_index)
-                    
+                    del current_node.keys[0]
+
+                    # Balance the tree after deletion
+                    self.balance_after_deletion(current_node, key)
+
                     # Delete the key from the internal nodes
                     self.delete_key_from_internal_node(self.root, key)
 
@@ -231,14 +234,6 @@ class BPlusTree:
         while not current_node.leaf:
             current_node = current_node.children[0]
         return current_node.keys[0][0]
-
-    def delete_key_from_leaf_node(self, key, leaf_node, node_parent, parent_index):
-        # Delete the key from the leaf node
-
-        del leaf_node.keys[0]
-
-        # Balance the tree after deletion
-        self.balance_after_deletion(leaf_node, key)
 
     def balance_after_deletion(self, node, key):
         # Balance the B+ tree after deletion
