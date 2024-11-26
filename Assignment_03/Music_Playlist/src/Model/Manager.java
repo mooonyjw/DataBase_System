@@ -1,32 +1,34 @@
+package Model;
+
 import java.util.Scanner;
 
-public class User {
-    public void showUserMenu() {
+public class Manager {
+    public void showManagerMenu() {
         Scanner scanner = new Scanner(System.in);
         int choice;
 
         do {
-            System.out.println("\nUser Menu");
-            System.out.println("1. View Music");
-            System.out.println("2. Create Playlist");
-            System.out.println("3. View Playlists");
-            System.out.println("4. Like Music");
+            System.out.println("\nManager Menu");
+            System.out.println("1. Add Music");
+            System.out.println("2. Update Music");
+            System.out.println("3. Delete Music");
+            System.out.println("4. View Reports");
             System.out.println("5. Logout");
             System.out.print("Enter your choice: ");
             choice = scanner.nextInt();
 
             switch (choice) {
                 case 1:
-                    viewMusic();
+                    addMusic();
                     break;
                 case 2:
-                    createPlaylist();
+                    updateMusic();
                     break;
                 case 3:
-                    viewPlaylists();
+                    deleteMusic();
                     break;
                 case 4:
-                    likeMusic();
+                    viewReports();
                     break;
                 case 5:
                     System.out.println("Logging out...");
@@ -37,23 +39,23 @@ public class User {
         } while (choice != 5);
     }
 
-    private void viewMusic() {
-        System.out.println("Viewing music...");
+    private void addMusic() {
+        System.out.println("Adding new music...");
         // Add database query logic
     }
 
-    private void createPlaylist() {
-        System.out.println("Creating playlist...");
+    private void updateMusic() {
+        System.out.println("Updating music...");
         // Add database query logic
     }
 
-    private void viewPlaylists() {
-        System.out.println("Viewing playlists...");
+    private void deleteMusic() {
+        System.out.println("Deleting music...");
         // Add database query logic
     }
 
-    private void likeMusic() {
-        System.out.println("Liking music...");
+    private void viewReports() {
+        System.out.println("Viewing reports...");
         // Add database query logic
     }
 }
