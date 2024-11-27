@@ -1,11 +1,17 @@
 package Model;
 
+import Security.DatabaseUtil;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.Scanner;
 
 public class User {
-    public void showUserMenu() {
+    public void showUserMenu(String userName) {
         Scanner scanner = new Scanner(System.in);
         int choice;
+
+        System.out.println("\nWelcome back, " + userName + "! Let's dive into the music world!");
 
         do {
             System.out.println("\nUser Menu");
@@ -58,4 +64,21 @@ public class User {
         System.out.println("Liking music...");
         // Add database query logic
     }
+
+    public String getUserName(String email) {
+        try {
+            String query = "SELECT User_Name FROM User WHERE User_Email = ?";
+            PreparedStatement pstmt = DatabaseUtil.getConnection().prepareStatement(query);
+            pstmt.setString(1, email);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getString("User_Name"); // 사용자 이름 반환
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "User"; // 기본값
+    }
+
+
 }

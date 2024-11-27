@@ -58,17 +58,18 @@ public class Login {
         if (isManager(email, password)) {
             System.out.print("Enter Manager PIN: ");
             int pin = scanner.nextInt();
-            if (validateManagerPin(pin)) {
+            if (validateManagerPin(email, password, pin)) {
                 Manager manager = new Manager();
-                manager.showManagerMenu();
+                manager.showManagerMenu(manager.getManagerName(email));
             } else {
                 System.out.println("Invalid Manager PIN. Access denied.");
             }
         } else if (isUser(email, password)) {
             User user = new User();
-            user.showUserMenu();
+            user.showUserMenu(user.getUserName(email));
         } else {
             System.out.println("Invalid login credentials.");
         }
     }
+
 }

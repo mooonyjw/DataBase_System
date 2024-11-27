@@ -70,40 +70,49 @@ public class Register {
             } else {
                 System.out.println("User registration failed. Please try again.");
             }
+        } catch (java.sql.SQLIntegrityConstraintViolationException e) {
+            System.out.println("This user already exists. Returning to the main menu.");
         } catch (Exception e) {
             System.out.println("An unexpected error occurred: " + e.getMessage());
             e.printStackTrace();
         }
+
     }
 
     // 여기할차례
     private void registerManager() {
         Scanner scanner = new Scanner(System.in);
-        System.out.print("Enter your ID: ");
-        int id = scanner.nextInt();
-        scanner.nextLine(); // Consume newline
+
+        // 관리자 이름 입력
         System.out.print("Enter your Name: ");
         String name = scanner.nextLine();
-        System.out.print("Enter your Phone: ");
-        String phone = scanner.nextLine();
-        System.out.print("Enter your Email: ");
-        String email = scanner.nextLine();
+
+        // 관리자 전화번호 입력
+        String phone = getValidPhoneNumber(scanner);
+
+        // 관리자 이메일 입력
+        String email = getValidEmail(scanner);
+
+        // 관리자 비밀번호 입력
         System.out.print("Enter your Password: ");
         String password = scanner.nextLine();
-        System.out.print("Enter Manager PIN: ");
-        int pin = scanner.nextInt();
+
+        // 관리자 PIN 입력
+        int pin = getValidManagerPin(scanner);
 
         try {
-            String query = "INSERT INTO Manager (Manager_Id, Manager_Name, Manager_Phone, Manager_Email, Manager_Password) VALUES (?, ?, ?, ?, ?)";
+            String query = "INSERT INTO Manager (Manager_Name, Manager_Phone, Manager_Email, Manager_Password, Manager_PIN) VALUES (?, ?, ?, ?, ?)";
             PreparedStatement pstmt = DatabaseUtil.getConnection().prepareStatement(query);
-            pstmt.setInt(1, id);
-            pstmt.setString(2, name);
-            pstmt.setString(3, phone);
-            pstmt.setString(4, email);
-            pstmt.setString(5, password);
+            pstmt.setString(1, name);
+            pstmt.setString(2, phone);
+            pstmt.setString(3, email);
+            pstmt.setString(4, password);
+            pstmt.setInt(5, pin);
 
             int rows = pstmt.executeUpdate();
             System.out.println(rows + " manager(s) registered successfully!");
+        } catch (java.sql.SQLIntegrityConstraintViolationException e) {
+            System.out.println("This manager already exists. Returning to the main menu.");
         } catch (Exception e) {
             System.out.println("Error during registration: " + e.getMessage());
         }
@@ -138,37 +147,34 @@ public class Register {
                 continue;
             }
 
-            if (isEmailAlreadyUsed(email)) {
-                System.out.println("This email is already in use. Please try another email.");
-                continue;
-            }
-
             break; // 이메일이 유효하고 중복되지 않은 경우 루프 종료
         } while (true);
 
         return email;
 
     }
-    // 중복 이메일 확인 함수
-    private boolean isEmailAlreadyUsed(String email) {
-        email = email.trim(); // 공백 제거
-        try {
-            String query = "SELECT User_Email FROM User WHERE User_Email = ? UNION SELECT Manager_Email FROM Manager WHERE Manager_Email = ?";
-            PreparedStatement pstmt = DatabaseUtil.getConnection().prepareStatement(query);
-            pstmt.setString(1, email);
-            pstmt.setString(2, email);
-            ResultSet rs = pstmt.executeQuery();
-            return rs.next(); // If a row exists, the email is already in use
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
 
     // 이메일 유효성 확인 함수
     private boolean isValidEmail(String email) {
         email = email.trim(); // 공백 제거
         return email.matches("^[\\w.-]+@[\\w.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    // 관리자 PIN 유효성 확인 함수
+    public int getValidManagerPin(Scanner scanner) {
+        String pin;
+
+        do {
+            System.out.print("Enter Manager PIN (4 digits): ");
+            pin = scanner.nextLine().trim(); // 공백 제거
+
+            // 유효성 검사: 4자리 숫자인지 확인
+            if (pin.matches("\\d{4}")) {
+                return Integer.parseInt(pin); // 4자리 숫자인 경우 정수로 변환 후 반환
+            } else {
+                System.out.println("Invalid PIN. Please enter exactly 4 digits.");
+            }
+        } while (true);
     }
 
 }
