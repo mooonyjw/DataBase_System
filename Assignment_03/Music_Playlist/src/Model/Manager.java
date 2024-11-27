@@ -30,7 +30,7 @@ public class Manager {
                     musicService.addOption();
                     break;
                 case 2:
-                    searchArtist();
+                    //searchArtist();
                     break;
                 case 3:
                     updateMusic();
