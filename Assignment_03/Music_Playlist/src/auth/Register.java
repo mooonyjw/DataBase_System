@@ -136,13 +136,14 @@ public class Register {
         return phone;
     }
 
+    // 이메일 유효성 확인 함수
     private String getValidEmail(Scanner scanner) {
         String email;
         do {
             System.out.print("Enter your Email: ");
             email = scanner.nextLine().trim(); // 공백 제거
 
-            if (!isValidEmail(email)) {
+            if (!email.matches("^[\\w.-]+@[\\w.-]+\\.[a-zA-Z]{2,}$")) {
                 System.out.println("This email is not valid. Please try with a valid email.");
                 continue;
             }
@@ -152,12 +153,6 @@ public class Register {
 
         return email;
 
-    }
-
-    // 이메일 유효성 확인 함수
-    private boolean isValidEmail(String email) {
-        email = email.trim(); // 공백 제거
-        return email.matches("^[\\w.-]+@[\\w.-]+\\.[a-zA-Z]{2,}$");
     }
 
     // 관리자 PIN 유효성 확인 함수

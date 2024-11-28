@@ -16,7 +16,7 @@ public class Manager {
 
         do {
             System.out.println("\nWelcome, Manager " + managerName + "! Ready to oversee the music platform?\n");
-            System.out.println("1. Add Album or Music");
+            System.out.println("1. Add");
             System.out.println("2. Search Artist or Album");
             System.out.println("3. Update Music");
             System.out.println("4. Delete Music");
