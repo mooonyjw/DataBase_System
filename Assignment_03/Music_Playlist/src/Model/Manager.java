@@ -1,13 +1,15 @@
 package Model;
 
 import Security.DatabaseUtil;
-import Service.MusicService;
+import Service.*;
+
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.Scanner;
 
 public class Manager {
-    private MusicService musicService = new MusicService();
+    private AddService addService = new AddService();
+    private SearchService searchService = new SearchService();
 
     public void showManagerMenu(String managerName) {
 
@@ -17,8 +19,8 @@ public class Manager {
         do {
             System.out.println("\nWelcome, Manager " + managerName + "! Ready to oversee the music platform?\n");
             System.out.println("1. Add");
-            System.out.println("2. Search Artist or Album");
-            System.out.println("3. Update Music");
+            System.out.println("2. Search");
+            System.out.println("3. Update");
             System.out.println("4. Delete Music");
             System.out.println("5. View Reports");
             System.out.println("6. Logout");
@@ -27,10 +29,10 @@ public class Manager {
 
             switch (choice) {
                 case 1:
-                    musicService.addOption();
+                    addService.addOption();
                     break;
                 case 2:
-                    //searchArtist();
+                    searchService.searchOption();
                     break;
                 case 3:
                     updateMusic();

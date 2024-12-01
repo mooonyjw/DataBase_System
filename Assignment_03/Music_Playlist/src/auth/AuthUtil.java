@@ -6,6 +6,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
 public class AuthUtil {
+    public static int currentManagerId = -1;  // 로그인된 매니저 ID 저장 (기본값 -1)
+
     public static boolean isManager(String email, String password) {
         try {
             String query = "SELECT * FROM Manager WHERE Manager_Email = ? AND Manager_Password = ?";
@@ -13,11 +15,15 @@ public class AuthUtil {
             pstmt.setString(1, email);
             pstmt.setString(2, password);
             ResultSet rs = pstmt.executeQuery();
-            return rs.next(); // If a row exists, it's valid
+
+            if (rs.next()) {
+                currentManagerId = rs.getInt("Manager_Id"); // 로그인된 매니저 ID 저장
+                return true;
+            }
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
         }
+        return false;
     }
 
     public static boolean isUser(String email, String password) {

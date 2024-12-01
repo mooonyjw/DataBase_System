@@ -1,5 +1,6 @@
 package Service;
 
+import Auth.AuthUtil;
 import Security.DatabaseUtil;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -8,7 +9,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Scanner;
 
-public class MusicService {
+public class AddService {
 
     public void addOption() {
         Scanner scanner = new Scanner(System.in);
@@ -30,6 +31,10 @@ public class MusicService {
                 break;
             case 3:
                 addMusic();
+                break;
+            case 4:
+                addGenre();
+                break;
             default:
                 System.out.println("Invalid choice. Returning to main menu.");
         }
@@ -86,6 +91,7 @@ public class MusicService {
             // 트랙 수 입력
             System.out.print("Enter Total Tracks: ");
             int totalTracks = scanner.nextInt();
+            scanner.nextLine(); // 입력 버퍼에 남아 있는 줄바꿈 문자 소비
 
             // 발매 날짜 입력
             LocalDate releaseDate = getValidDate(scanner);
@@ -110,8 +116,6 @@ public class MusicService {
         }
     }
 
-
-    // 여기부터 해야됨. 장르 add하는 함수 작성하고 앨범 id 유효성 검사하는 함수 작성
     public void addMusic() {
         Scanner scanner = new Scanner(System.in);
 
@@ -126,21 +130,20 @@ public class MusicService {
             System.out.print("Enter Music Length (in seconds): ");
             int length = scanner.nextInt();
 
-
+            // 앨범 ID 입력
             System.out.print("Enter Album ID: ");
             int albumId = scanner.nextInt();
 
             System.out.print("Enter Genre ID: ");
             int genreId = scanner.nextInt();
 
-            String query = "INSERT INTO Music (Title, Length, Manager_Id, Artist_Id, Album_Id, Genre_Id) VALUES (?, ?, ?, ?, ?, ?)";
+            String query = "INSERT INTO Music (Title, Length, managerId, albumId, genreId) VALUES (?, ?, ?, ?, ?)";
             PreparedStatement pstmt = DatabaseUtil.getConnection().prepareStatement(query);
             pstmt.setString(1, title);
             pstmt.setInt(2, length);
-            pstmt.setInt(3, managerId);
-            pstmt.setInt(4, artistId);
-            pstmt.setInt(5, albumId);
-            pstmt.setInt(6, genreId);
+            pstmt.setInt(3, AuthUtil.currentManagerId);
+            pstmt.setInt(4, albumId);
+            pstmt.setInt(5, genreId);
 
             int rows = pstmt.executeUpdate();
             if (rows > 0) {
@@ -151,6 +154,39 @@ public class MusicService {
 
         } catch (Exception e) {
             System.out.println("Error while adding music: " + e.getMessage());
+        }
+    }
+
+    public void addGenre() {
+        Scanner scanner = new Scanner(System.in);
+
+        try {
+            System.out.println("You are adding a new genre to the platform.");
+
+            // 장르 이름 입력
+            System.out.print("Enter Genre Name: ");
+            String genreName = scanner.nextLine();
+
+            // 중복 확인
+            if (isGenreExists(genreName)) {
+                System.out.println("This genre already exists. Please try a different genre.");
+                return; // 중복이면 함수 종료
+            }
+
+            // 데이터베이스에 장르 추가
+            String query = "INSERT INTO Genre (Genre_Name) VALUES (?)";
+            PreparedStatement pstmt = DatabaseUtil.getConnection().prepareStatement(query);
+            pstmt.setString(1, genreName);
+
+            int rows = pstmt.executeUpdate();
+            if (rows > 0) {
+                System.out.println("Genre added successfully!");
+            } else {
+                System.out.println("Failed to add genre.");
+            }
+
+        } catch (Exception e) {
+            System.out.println("Error while adding genre: " + e.getMessage());
         }
     }
 
@@ -176,24 +212,31 @@ public class MusicService {
 
     public LocalDate getValidDate(Scanner scanner) {
         LocalDate date = null;
+
         while (date == null) {
-            System.out.print("Enter Date (YYYY-MM-DD): ");
-            String dateInput = scanner.nextLine();
+            System.out.print("Enter Debut or Release Date (YYYYMMDD or YYYY-MM-DD): ");
+            String dateInput = scanner.nextLine().trim();
 
             if (dateInput.isEmpty()) {
                 System.out.println("Date cannot be empty. Please try again.");
                 continue;
             }
 
+            // 하이픈 자동 삽입
+            if (dateInput.matches("\\d{8}")) {  // 숫자 8자리일 경우
+                dateInput = dateInput.substring(0, 4) + "-" + dateInput.substring(4, 6) + "-" + dateInput.substring(6);
+            }
+
             try {
                 // Validate and parse date
                 date = LocalDate.parse(dateInput, DateTimeFormatter.ISO_LOCAL_DATE);
             } catch (DateTimeParseException e) {
-                System.out.println("Invalid date format. Please enter the date in YYYY-MM-DD format.");
+                System.out.println("Invalid date format. Please enter the date in YYYY-MM-DD or YYYYMMDD format.");
             }
         }
         return date;
     }
+
 
     public int getValidArtistID(Scanner scanner) {
         int artistId = -1;  // 아티스트 ID 초깃값
@@ -224,6 +267,20 @@ public class MusicService {
 
         return artistId;
     }
+
+    private boolean isGenreExists(String genreName) {
+        try {
+            String query = "SELECT Genre_Id FROM Genre WHERE Genre_Name = ?";
+            PreparedStatement pstmt = DatabaseUtil.getConnection().prepareStatement(query);
+            pstmt.setString(1, genreName);
+            ResultSet rs = pstmt.executeQuery();
+            return rs.next();  // 결과가 존재하면 중복
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
 
 
 }
