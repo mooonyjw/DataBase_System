@@ -1,11 +1,14 @@
 package Service;
 
+import Auth.AuthUtil;
 import Security.DatabaseUtil;
+import Utils.*;
 
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.util.Scanner;
 import java.sql.ResultSet;
+
 
 public class UpdateService {
     public void updateOption() {
@@ -117,6 +120,7 @@ public class UpdateService {
         }
     }
 
+    // 앨범 정보 업데이트
     public void updateAlbum() {
         Scanner scanner = new Scanner(System.in);
 
@@ -165,7 +169,7 @@ public class UpdateService {
                 case 4:
                     System.out.print("Enter new Artist ID: ");
                     int newArtistId = scanner.nextInt();
-                    if (isValidArtistId(newArtistId)) {
+                    if (IsValidUtil.isValidArtistId(newArtistId)) {
                         query = "UPDATE Album SET ArtistId = ? WHERE Album_Id = ?";
                         pstmt = DatabaseUtil.getConnection().prepareStatement(query);
                         pstmt.setInt(1, newArtistId);
@@ -195,7 +199,7 @@ public class UpdateService {
         }
     }
 
-
+    // 음악 정보 업데이트
     public void updateMusic() {
         Scanner scanner = new Scanner(System.in);
 
@@ -294,6 +298,7 @@ public class UpdateService {
                     query = "UPDATE Genre SET Genre_Name = ? WHERE Genre_Id = ?";
                     pstmt = DatabaseUtil.getConnection().prepareStatement(query);
                     pstmt.setString(1, newName);
+                    pstmt.setInt(2, genreId);
                     break;
                 case 2:
                     System.out.println("Exiting update menu...");
@@ -316,7 +321,7 @@ public class UpdateService {
         }
     }
 // 여기 함수 update 다 되는지 확인 안 해봄     // 앨범 id 유효성 검사하는 함수 작성
-    public void updateManager(int managerId) {
+    public void updateManager() {
         Scanner scanner = new Scanner(System.in);
 
         try {
@@ -325,46 +330,63 @@ public class UpdateService {
             System.out.println("2. Phone");
             System.out.println("3. Email");
             System.out.println("4. Password");
-            System.out.println("5. Exit");
+            System.out.println("5. PIN");
+            System.out.println("6. Exit");
             System.out.print("Enter your choice: ");
             int choice = scanner.nextInt();
             scanner.nextLine(); // Consume newline
 
             String query = "";
-            String newValue = "";
+            PreparedStatement pstmt;
             switch (choice) {
                 case 1:
                     System.out.print("Enter new Name: ");
-                    newValue = scanner.nextLine();
+                    String newName = scanner.nextLine();
                     query = "UPDATE Manager SET Manager_Name = ? WHERE Manager_Id = ?";
+                    pstmt = DatabaseUtil.getConnection().prepareStatement(query);
+                    pstmt.setString(1, newName);
+                    pstmt.setInt(2, AuthUtil.currentManagerId);
                     break;
                 case 2:
-                    System.out.print("Enter new Phone (11 digits, no hyphens): ");
-                    newValue = getValidPhoneNumber(scanner);
+                    System.out.print("Enter new Phone Number (11 digits, no hyphens): ");
+                    String newPhoneNumber = ValidationUtil.getValidPhoneNumber(scanner);
                     query = "UPDATE Manager SET Manager_Phone = ? WHERE Manager_Id = ?";
+                    pstmt = DatabaseUtil.getConnection().prepareStatement(query);
+                    pstmt.setString(1, newPhoneNumber);
+                    pstmt.setInt(2, AuthUtil.currentManagerId);
                     break;
                 case 3:
                     System.out.print("Enter new Email: ");
-                    newValue = getValidEmail(scanner);
+                    String newEmail = ValidationUtil.getValidEmail(scanner);
                     query = "UPDATE Manager SET Manager_Email = ? WHERE Manager_Id = ?";
+                    pstmt = DatabaseUtil.getConnection().prepareStatement(query);
+                    pstmt.setString(1, newEmail);
+                    pstmt.setInt(2, AuthUtil.currentManagerId);
+
                     break;
                 case 4:
                     System.out.print("Enter new Password: ");
-                    newValue = scanner.nextLine();
+                    String newPassword = scanner.nextLine();
                     query = "UPDATE Manager SET Manager_Password = ? WHERE Manager_Id = ?";
+                    pstmt = DatabaseUtil.getConnection().prepareStatement(query);
+                    pstmt.setString(1, newPassword);
+                    pstmt.setInt(2, AuthUtil.currentManagerId);
                     break;
                 case 5:
+                    System.out.print("Enter new PIN: ");
+                    String newPin = scanner.nextLine();
+                    query = "UPDATE Manager SET Manager_PIN = ? WHERE Manager_Id = ?";
+                    pstmt = DatabaseUtil.getConnection().prepareStatement(query);
+                    pstmt.setString(1, newPin);
+                    pstmt.setInt(2, AuthUtil.currentManagerId);
+                    break;
+                case 6:
                     System.out.println("Exiting update menu...");
                     return;
                 default:
                     System.out.println("Invalid choice. Please try again.");
                     return;
             }
-
-            // Execute the update query
-            PreparedStatement pstmt = DatabaseUtil.getConnection().prepareStatement(query);
-            pstmt.setString(1, newValue);
-            pstmt.setInt(2, managerId);
 
             int rows = pstmt.executeUpdate();
             if (rows > 0) {
@@ -378,48 +400,8 @@ public class UpdateService {
         }
     }
 
-    private String getValidPhoneNumber(Scanner scanner) {
-        String phone;
-        while (true) {
-            System.out.print("Enter your Phone (11 digits, no hyphens): ");
-            phone = scanner.nextLine().replace("-", ""); // Remove hyphens
 
-            if (phone.matches("\\d{11}")) { // Check if the phone number is exactly 11 digits
-                break;
-            } else {
-                System.out.println("Invalid phone number. Please enter exactly 11 digits.");
-            }
-        }
-        return phone;
-    }
 
-    private String getValidEmail(Scanner scanner) {
-        String email;
-        while (true) {
-            System.out.print("Enter your Email: ");
-            email = scanner.nextLine().trim();
-
-            if (email.matches("^[\\w.-]+@[\\w.-]+\\.[a-zA-Z]{2,}$")) { // Validate email format
-                break;
-            } else {
-                System.out.println("Invalid email format. Please try again.");
-            }
-        }
-        return email;
-    }
-    
-    private boolean isValidArtistId(int artistId) {
-        try {
-            String query = "SELECT Artist_Id FROM Artist WHERE Artist_Id = ?";
-            PreparedStatement pstmt = DatabaseUtil.getConnection().prepareStatement(query);
-            pstmt.setInt(1, artistId);
-            ResultSet rs = pstmt.executeQuery();
-            return rs.next(); // Returns true if ArtistId exists
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
 
 
 }

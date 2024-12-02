@@ -10,6 +10,7 @@ import java.util.Scanner;
 public class Manager {
     private AddService addService = new AddService();
     private SearchService searchService = new SearchService();
+    private UpdateService updateService = new UpdateService();
 
     public void showManagerMenu(String managerName) {
 
@@ -35,7 +36,7 @@ public class Manager {
                     searchService.searchOption();
                     break;
                 case 3:
-                    updateMusic();
+                    updateService.updateOption();
                     break;
                 case 4:
                     deleteMusic();

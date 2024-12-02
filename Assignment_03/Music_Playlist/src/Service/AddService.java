@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Scanner;
+import Utils.*;
 
 public class AddService {
 
@@ -44,14 +45,14 @@ public class AddService {
         Scanner scanner = new Scanner(System.in);
 
         try{
-            System.out.print("You are adding a new artist to the platform.\n");
+            System.out.print("\nYou are adding a new artist to the platform.\n");
 
             // 아티스트 이름 입력
             System.out.print("Enter Artist Name: ");
             String name = scanner.nextLine();
 
             // 아티스트 데뷔 날짜 입력
-            LocalDate debutDate = getValidDate(scanner);
+            LocalDate debutDate = ValidationUtil.getValidDate(scanner);
 
             // 아티스트 소속사 입력
             System.out.print("Enter Artist Agency: ");
@@ -79,14 +80,14 @@ public class AddService {
         Scanner scanner = new Scanner(System.in);
 
         try {
-            System.out.print("You are adding a new album to the platform.\n");
+            System.out.print("\nYou are adding a new album to the platform.\n");
 
             // 앨범 이름 입력
             System.out.print("Enter Album Name: ");
             String name = scanner.nextLine();
 
             // 아티스트 ID 입력
-            int artistId = getValidArtistID(scanner);
+            int artistId = ValidationUtil.getValidArtistID(scanner);
 
             // 트랙 수 입력
             System.out.print("Enter Total Tracks: ");
@@ -94,7 +95,7 @@ public class AddService {
             scanner.nextLine(); // 입력 버퍼에 남아 있는 줄바꿈 문자 소비
 
             // 발매 날짜 입력
-            LocalDate releaseDate = getValidDate(scanner);
+            LocalDate releaseDate = ValidationUtil.getValidDate(scanner);
 
             String query = "INSERT INTO Album (Album_Name, artistId, Total_Tracks, Release_Date) VALUES (?, ?, ?, ?)";
             PreparedStatement pstmt = DatabaseUtil.getConnection().prepareStatement(query);
@@ -120,7 +121,7 @@ public class AddService {
         Scanner scanner = new Scanner(System.in);
 
         try {
-            System.out.print("You are adding a new music to the platform.\n");
+            System.out.print("\nYou are adding a new music to the platform.\n");
 
             // 음악 제목 입력
             System.out.print("Enter Music Title: ");
@@ -161,7 +162,7 @@ public class AddService {
         Scanner scanner = new Scanner(System.in);
 
         try {
-            System.out.println("You are adding a new genre to the platform.");
+            System.out.println("\nYou are adding a new genre to the platform.");
 
             // 장르 이름 입력
             System.out.print("Enter Genre Name: ");
@@ -210,63 +211,8 @@ public class AddService {
         }
     }
 
-    public LocalDate getValidDate(Scanner scanner) {
-        LocalDate date = null;
-
-        while (date == null) {
-            System.out.print("Enter Debut or Release Date (YYYYMMDD or YYYY-MM-DD): ");
-            String dateInput = scanner.nextLine().trim();
-
-            if (dateInput.isEmpty()) {
-                System.out.println("Date cannot be empty. Please try again.");
-                continue;
-            }
-
-            // 하이픈 자동 삽입
-            if (dateInput.matches("\\d{8}")) {  // 숫자 8자리일 경우
-                dateInput = dateInput.substring(0, 4) + "-" + dateInput.substring(4, 6) + "-" + dateInput.substring(6);
-            }
-
-            try {
-                // Validate and parse date
-                date = LocalDate.parse(dateInput, DateTimeFormatter.ISO_LOCAL_DATE);
-            } catch (DateTimeParseException e) {
-                System.out.println("Invalid date format. Please enter the date in YYYY-MM-DD or YYYYMMDD format.");
-            }
-        }
-        return date;
-    }
 
 
-    public int getValidArtistID(Scanner scanner) {
-        int artistId = -1;  // 아티스트 ID 초깃값
-        boolean isValid = false;  // 유효성 플래그
-
-        while (!isValid) {
-            System.out.print("Enter Artist ID: ");
-            artistId = scanner.nextInt();
-
-            try {
-                // DB에서 Artist ID 존재 여부 확인
-                String query = "SELECT Artist_Id FROM Artist WHERE Artist_Id = ?";
-                PreparedStatement pstmt = DatabaseUtil.getConnection().prepareStatement(query);
-                pstmt.setInt(1, artistId);
-                ResultSet rs = pstmt.executeQuery();
-
-                if (rs.next()) {
-                    isValid = true;  // Artist ID가 유효하면 반복 종료
-                } else {
-                    System.out.println("Invalid Artist ID. Please enter a valid ID.");
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                System.out.println("Error while validating Artist ID. Try again.");
-            }
-        }
-
-        return artistId;
-    }
 
     private boolean isGenreExists(String genreName) {
         try {

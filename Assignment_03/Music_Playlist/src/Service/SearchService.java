@@ -7,7 +7,7 @@ import java.sql.ResultSet;
 import java.util.Scanner;
 
 public class SearchService {
-
+    // 이름으로 id만 찾을까 아니면 다른 기능들도 넣을까... 흠 ..
     public void searchOption() {
         Scanner scanner = new Scanner(System.in);
         System.out.println("\nWhat you are searching for?");

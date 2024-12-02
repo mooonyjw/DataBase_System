@@ -6,6 +6,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Scanner;
 import java.time.LocalDate;
+import Utils.ValidationUtil; // Import the class
+
 
 public class Register {
     public void register() {
@@ -41,10 +43,10 @@ public class Register {
         String name = scanner.nextLine();
 
         // 사용자 전화번호 입력
-        String phone = getValidPhoneNumber(scanner);
+        String phone = ValidationUtil.getValidPhoneNumber(scanner);
 
         // 사용자 이메일 입력
-        String email = getValidEmail(scanner);
+        String email = ValidationUtil.getValidEmail(scanner);
 
         // 사용자 비밀번호 입력
         System.out.print("Enter your Password: ");
@@ -88,17 +90,17 @@ public class Register {
         String name = scanner.nextLine();
 
         // 관리자 전화번호 입력
-        String phone = getValidPhoneNumber(scanner);
+        String phone = ValidationUtil.getValidPhoneNumber(scanner);
 
         // 관리자 이메일 입력
-        String email = getValidEmail(scanner);
+        String email = ValidationUtil.getValidEmail(scanner);
 
         // 관리자 비밀번호 입력
         System.out.print("Enter your Password: ");
         String password = scanner.nextLine();
 
         // 관리자 PIN 입력
-        int pin = getValidManagerPin(scanner);
+        int pin = ValidationUtil.getValidManagerPin(scanner);
 
         try {
             String query = "INSERT INTO Manager (Manager_Name, Manager_Phone, Manager_Email, Manager_Password, Manager_PIN) VALUES (?, ?, ?, ?, ?)";
@@ -110,66 +112,12 @@ public class Register {
             pstmt.setInt(5, pin);
 
             int rows = pstmt.executeUpdate();
-            System.out.println(rows + " manager(s) registered successfully!");
+            System.out.println("Manager \"" + name + "\" registered successfully!");
         } catch (java.sql.SQLIntegrityConstraintViolationException e) {
             System.out.println("This manager already exists. Returning to the main menu.");
         } catch (Exception e) {
             System.out.println("Error during registration: " + e.getMessage());
         }
-    }
-
-    // 전화번호 유효성 확인 함수
-    private String getValidPhoneNumber(Scanner scanner) {
-        String phone;
-        do {
-            System.out.print("Enter your Phone (11 digits, no hyphens): ");
-            phone = scanner.nextLine().replace("-", ""); // - 하이픈 제거
-
-            // 11자리 유효성 검사
-            if (!phone.matches("\\d{11}")) {
-                System.out.println("Invalid phone number. Please enter exactly 11 digits (e.g., 01012345678).");
-                continue;
-            }
-            break; // 올바른 형식일 경우 루프 종료
-        } while (true);
-
-        return phone;
-    }
-
-    // 이메일 유효성 확인 함수
-    private String getValidEmail(Scanner scanner) {
-        String email;
-        do {
-            System.out.print("Enter your Email: ");
-            email = scanner.nextLine().trim(); // 공백 제거
-
-            if (!email.matches("^[\\w.-]+@[\\w.-]+\\.[a-zA-Z]{2,}$")) {
-                System.out.println("This email is not valid. Please try with a valid email.");
-                continue;
-            }
-
-            break; // 이메일이 유효하고 중복되지 않은 경우 루프 종료
-        } while (true);
-
-        return email;
-
-    }
-
-    // 관리자 PIN 유효성 확인 함수
-    public int getValidManagerPin(Scanner scanner) {
-        String pin;
-
-        do {
-            System.out.print("Enter Manager PIN (4 digits): ");
-            pin = scanner.nextLine().trim(); // 공백 제거
-
-            // 유효성 검사: 4자리 숫자인지 확인
-            if (pin.matches("\\d{4}")) {
-                return Integer.parseInt(pin); // 4자리 숫자인 경우 정수로 변환 후 반환
-            } else {
-                System.out.println("Invalid PIN. Please enter exactly 4 digits.");
-            }
-        } while (true);
     }
 
 }
