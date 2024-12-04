@@ -1,12 +1,18 @@
 package Model;
 
+import Auth.AuthUtil;
 import Security.DatabaseUtil;
+import UserService.*;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.Scanner;
 
 public class User {
+    private UserSearchService userSearchService = new UserSearchService();
+    private ListenedService listenedService = new ListenedService();
+    private PlaylistService playlistService = new PlaylistService();
+    private UserUpdateService userupdateService = new UserUpdateService();
     public void showUserMenu(String userName) {
         Scanner scanner = new Scanner(System.in);
         int choice;
@@ -15,29 +21,34 @@ public class User {
 
         do {
             System.out.println("\nUser Menu");
-            System.out.println("1. View Music");
-            System.out.println("2. Create Playlist");
-            System.out.println("3. View Playlists");
-            System.out.println("4. Like Music");
-            System.out.println("5. Logout");
+            System.out.println("1. Search");
+            System.out.println("2. Show Listen History");
+            System.out.println("3. Create Playlist");
+            System.out.println("4. View Playlists");
+            System.out.println("5. Liked Music");
+            System.out.println("6. Settings");
+            System.out.println("7. Logout");
             System.out.print("Enter your choice: ");
             choice = scanner.nextInt();
 
             switch (choice) {
                 case 1:
-                    viewMusic();
+                    userSearchService.usersearchOption();
                     break;
                 case 2:
-                    createPlaylist();
+                    listenedService.showListenHistory(AuthUtil.currentUserId);
                     break;
                 case 3:
-                    viewPlaylists();
+                    playlistService.createPlaylist(AuthUtil.currentUserId);
                     break;
                 case 4:
-                    likeMusic();
+                    playlistService.viewPlaylists(AuthUtil.currentUserId);
                     break;
                 case 5:
                     System.out.println("Logging out...");
+                    break;
+                case 6:
+                    userupdateService.updateManager();
                     break;
                 default:
                     System.out.println("Invalid choice. Try again.");

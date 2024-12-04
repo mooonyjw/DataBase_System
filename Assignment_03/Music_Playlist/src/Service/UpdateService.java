@@ -6,8 +6,13 @@ import Utils.*;
 
 import java.sql.Date;
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.Scanner;
 import java.sql.ResultSet;
+
+import static Utils.IsValidUtil.*;
+import static Utils.ValidationUtil.*;
 
 
 public class UpdateService {
@@ -59,9 +64,7 @@ public class UpdateService {
         Scanner scanner = new Scanner(System.in);
 
         try {
-            System.out.print("Enter Artist ID to update: ");
-            int artistId = scanner.nextInt();
-            scanner.nextLine();
+            int artistId = getValidArtistID(scanner);
 
             System.out.println("\nWhat information do you want to update?");
             System.out.println("1. Name");
@@ -74,26 +77,37 @@ public class UpdateService {
 
             String query = "";
             PreparedStatement pstmt;
+
             switch (choice) {
                 case 1:
+                    // 이름 변경
                     System.out.print("Enter new Name: ");
-                    String newName = scanner.nextLine();
+                    String newName = scanner.nextLine().trim();
+                    if (newName.isEmpty()) {
+                        System.out.println("Name cannot be empty. Operation cancelled.");
+                        return;
+                    }
                     query = "UPDATE Artist SET Artist_Name = ? WHERE Artist_Id = ?";
                     pstmt = DatabaseUtil.getConnection().prepareStatement(query);
                     pstmt.setString(1, newName);
                     pstmt.setInt(2, artistId);
                     break;
                 case 2:
-                    System.out.print("Enter new Debut Date (YYYY-MM-DD): ");
-                    String newDate = scanner.nextLine();
+                    // 데뷔 날짜 변경
+                    LocalDate newDate = ValidationUtil.getValidDate(scanner);
                     query = "UPDATE Artist SET Debut_Date = ? WHERE Artist_Id = ?";
                     pstmt = DatabaseUtil.getConnection().prepareStatement(query);
-                    pstmt.setString(1, newDate);
+                    pstmt.setDate(1, Date.valueOf(newDate));
                     pstmt.setInt(2, artistId);
                     break;
                 case 3:
+                    // 소속사 변경
                     System.out.print("Enter new Agency: ");
-                    String newAgency = scanner.nextLine();
+                    String newAgency = scanner.nextLine().trim();
+                    if (newAgency.isEmpty()) {
+                        System.out.println("Agency cannot be empty. Operation cancelled.");
+                        return;
+                    }
                     query = "UPDATE Artist SET Agency = ? WHERE Artist_Id = ?";
                     pstmt = DatabaseUtil.getConnection().prepareStatement(query);
                     pstmt.setString(1, newAgency);
@@ -111,12 +125,17 @@ public class UpdateService {
             int rows = pstmt.executeUpdate();
             if (rows > 0) {
                 System.out.println("Information updated successfully!");
+                // Audit 로그 추가
+                AuditService auditService = new AuditService();
+                auditService.logAction(AuthUtil.currentManagerId, "Artist", "UPDATE");
             } else {
                 System.out.println("Failed to update information.");
             }
 
+        } catch (SQLException e) {
+            System.out.println("Database error while updating artist: " + e.getMessage());
         } catch (Exception e) {
-            System.out.println("Error while updating information: " + e.getMessage());
+            System.out.println("Unexpected error while updating artist: " + e.getMessage());
         }
     }
 
@@ -125,60 +144,51 @@ public class UpdateService {
         Scanner scanner = new Scanner(System.in);
 
         try {
-            System.out.print("Enter Album ID to update: ");
-            int albumId = scanner.nextInt();
-            scanner.nextLine();
+            int albumId = getValidAlbumID(scanner);
 
             System.out.println("\nWhat information do you want to update?");
             System.out.println("1. Album Name");
-            System.out.println("2. Total Tracks");
-            System.out.println("3. Release Date");
-            System.out.println("4. Artist ID");
-            System.out.println("5. Exit");
+            System.out.println("2. Release Date");
+            System.out.println("3. Artist ID");
+            System.out.println("4. Exit");
             System.out.print("Enter your choice: ");
             int choice = scanner.nextInt();
             scanner.nextLine();
 
             String query = "";
             PreparedStatement pstmt = null;
+
             switch (choice) {
                 case 1:
+                    // 앨범 이름 변경
                     System.out.print("Enter new Album Name: ");
-                    String newAlbumName = scanner.nextLine();
-                    query = "UPDATE Album SET Album_Title = ? WHERE Album_Id = ?";
+                    String newAlbumName = scanner.nextLine().trim();
+                    if (newAlbumName.isEmpty()) {
+                        System.out.println("Album name cannot be empty.");
+                        return;
+                    }
+                    query = "UPDATE Album SET Album_Name = ? WHERE Album_Id = ?";
                     pstmt = DatabaseUtil.getConnection().prepareStatement(query);
                     pstmt.setString(1, newAlbumName);
                     pstmt.setInt(2, albumId);
                     break;
                 case 2:
-                    System.out.print("Enter new Total Tracks: ");
-                    int newTotalTracks = scanner.nextInt();
-                    query = "UPDATE Album SET Total_Tracks = ? WHERE Album_Id = ?";
-                    pstmt = DatabaseUtil.getConnection().prepareStatement(query);
-                    pstmt.setInt(1, newTotalTracks);
-                    pstmt.setInt(2, albumId);
-                    break;
-                case 3:
-                    System.out.print("Enter new Release Date (YYYY-MM-DD): ");
-                    String newReleaseDate = scanner.nextLine();
+                    // 발매 날짜 변경
+                    LocalDate newReleaseDate = ValidationUtil.getValidDate(scanner);
                     query = "UPDATE Album SET Release_Date = ? WHERE Album_Id = ?";
                     pstmt = DatabaseUtil.getConnection().prepareStatement(query);
                     pstmt.setDate(1, Date.valueOf(newReleaseDate));
                     pstmt.setInt(2, albumId);
                     break;
-                case 4:
-                    System.out.print("Enter new Artist ID: ");
-                    int newArtistId = scanner.nextInt();
-                    if (IsValidUtil.isValidArtistId(newArtistId)) {
-                        query = "UPDATE Album SET ArtistId = ? WHERE Album_Id = ?";
-                        pstmt = DatabaseUtil.getConnection().prepareStatement(query);
-                        pstmt.setInt(1, newArtistId);
-                        pstmt.setInt(2, albumId);
-                    } else {
-                        System.out.println("Invalid Artist ID. Please ensure the Artist ID exists.");
-                    }
+                case 3:
+                    // 아티스트 ID 변경
+                    int newArtistId = ValidationUtil.getValidArtistID(scanner);
+                    query = "UPDATE Album SET ArtistId = ? WHERE Album_Id = ?";
+                    pstmt = DatabaseUtil.getConnection().prepareStatement(query);
+                    pstmt.setInt(1, newArtistId);
+                    pstmt.setInt(2, albumId);
                     break;
-                case 5:
+                case 4:
                     System.out.println("Exiting update menu...");
                     return;
                 default:
@@ -190,12 +200,17 @@ public class UpdateService {
             int rows = pstmt.executeUpdate();
             if (rows > 0) {
                 System.out.println("Information updated successfully!");
+                // Audit 로그 기록
+                AuditService auditService = new AuditService();
+                auditService.logAction(AuthUtil.currentManagerId, "Album", "UPDATE");
             } else {
                 System.out.println("Failed to update information.");
             }
 
+        } catch (SQLException e) {
+            System.out.println("Database error while updating album: " + e.getMessage());
         } catch (Exception e) {
-            System.out.println("Error while updating information: " + e.getMessage());
+            System.out.println("Unexpected error while updating album: " + e.getMessage());
         }
     }
 
@@ -204,9 +219,7 @@ public class UpdateService {
         Scanner scanner = new Scanner(System.in);
 
         try {
-            System.out.print("Enter Music ID: ");
-            int musicId = scanner.nextInt();
-            scanner.nextLine();
+            int musicId = getValidMusicID(scanner);
 
             System.out.println("\nWhat information do you want to update?");
             System.out.println("1. Title");
@@ -220,10 +233,16 @@ public class UpdateService {
 
             String query = "";
             PreparedStatement pstmt;
+
             switch (choice) {
                 case 1:
+                    // 제목 변경
                     System.out.print("Enter new Title: ");
-                    String newTitle= scanner.nextLine();
+                    String newTitle= scanner.nextLine().trim();
+                    if (newTitle.isEmpty() || newTitle.length() > 255) {
+                        System.out.println("Invalid title. Please try again.");
+                        return;
+                    }
                     query = "UPDATE Music SET Title = ? WHERE Music_Id = ?";
                     pstmt = DatabaseUtil.getConnection().prepareStatement(query);
                     pstmt.setString(1, newTitle);
@@ -232,45 +251,52 @@ public class UpdateService {
                 case 2:
                     System.out.print("Enter new Length (in seconds): ");
                     int newLength = scanner.nextInt();
+                    if (newLength <= 0) {
+                        System.out.println("Invalid length. Please enter a positive value.");
+                        return;
+                    }
                     query = "UPDATE Music SET Length = ? WHERE Music_Id = ?";
                     pstmt = DatabaseUtil.getConnection().prepareStatement(query);
                     pstmt.setInt(1, newLength);
                     pstmt.setInt(2, musicId);
                     break;
                 case 3:
-                    System.out.print("Enter new Album ID: ");
-                    int newAlbumId = scanner.nextInt();
-                    query = "UPDATE Music SET Album_Id = ? WHERE Music_Id = ?";
+                    int newAlbumId = ValidationUtil.getValidAlbumID(scanner);
+                    query = "UPDATE Music SET albumId = ? WHERE Music_Id = ?";
                     pstmt = DatabaseUtil.getConnection().prepareStatement(query);
                     pstmt.setInt(1, newAlbumId);
                     pstmt.setInt(2, musicId);
                     break;
                 case 4:
-                    System.out.print("Enter new Genre ID: ");
-                    int newGenreId = scanner.nextInt();
-                    query = "UPDATE Music SET Genre_Id = ? WHERE Music_Id = ?";
+                    int newGenreId = ValidationUtil.getValidGenreID(scanner);
+                    query = "UPDATE Music SET genreId = ? WHERE Music_Id = ?";
                     pstmt = DatabaseUtil.getConnection().prepareStatement(query);
                     pstmt.setInt(1, newGenreId);
                     pstmt.setInt(2, musicId);
                     break;
                 case 5:
                     System.out.println("Exiting update menu...");
-                    return; // Exit the function
+                    return;
                 default:
                     System.out.println("Invalid choice. Please try again.");
-                    return; // Return to prevent execution of invalid query
+                    return;
             }
 
             // Update 실행
             int rows = pstmt.executeUpdate();
             if (rows > 0) {
                 System.out.println("Information updated successfully!");
+                // Audit 로그 기록
+                AuditService auditService = new AuditService();
+                auditService.logAction(AuthUtil.currentManagerId, "Music", "UPDATE");
             } else {
                 System.out.println("Failed to update information.");
             }
 
+        } catch (SQLException e) {
+            System.out.println("Database error while updating music: " + e.getMessage());
         } catch (Exception e) {
-            System.out.println("Error while updating information: " + e.getMessage());
+            System.out.println("Unexpected error while updating music: " + e.getMessage());
         }
     }
 
@@ -278,9 +304,7 @@ public class UpdateService {
         Scanner scanner = new Scanner(System.in);
 
         try {
-            System.out.print("Enter Genre ID to update: ");
-            int genreId = scanner.nextInt();
-            scanner.nextLine();
+            int genreId = getValidGenreID(scanner);
 
             System.out.println("\nWhat information do you want to update?");
             System.out.println("1. Name");
@@ -291,13 +315,32 @@ public class UpdateService {
 
             String query = "";
             PreparedStatement pstmt;
+
             switch (choice) {
                 case 1:
-                    System.out.print("Enter new Name: ");
-                    String newName = scanner.nextLine();
+                    // 장르 이름 변경
+                    String newGenreName;
+                    while (true) {
+                        System.out.print("Enter Genre Name: ");
+                        newGenreName = scanner.nextLine().trim();
+
+                        if (newGenreName.isEmpty()) {
+                            System.out.println("Genre name cannot be empty. Please enter a valid genre name.");
+                            continue;
+                        }
+
+                        // 중복 확인
+                        if (isGenreExists(newGenreName)) {
+                            System.out.println("This genre already exists. Please try a different genre.");
+                            continue;
+                        }
+
+                        // 중복도 아니고 비어있지도 않으면 반복 종료
+                        break;
+                    }
                     query = "UPDATE Genre SET Genre_Name = ? WHERE Genre_Id = ?";
                     pstmt = DatabaseUtil.getConnection().prepareStatement(query);
-                    pstmt.setString(1, newName);
+                    pstmt.setString(1, newGenreName);
                     pstmt.setInt(2, genreId);
                     break;
                 case 2:
@@ -312,12 +355,17 @@ public class UpdateService {
             int rows = pstmt.executeUpdate();
             if (rows > 0) {
                 System.out.println("Information updated successfully!");
+                // Audit 로그 기록
+                AuditService auditService = new AuditService();
+                auditService.logAction(AuthUtil.currentManagerId, "Genre", "UPDATE");
             } else {
                 System.out.println("Failed to update information.");
             }
 
+        } catch (SQLException e) {
+            System.out.println("Database error while updating genre: " + e.getMessage());
         } catch (Exception e) {
-            System.out.println("Error while updating information: " + e.getMessage());
+            System.out.println("Unexpected error while updating genre: " + e.getMessage());
         }
     }
 // 여기 함수 update 다 되는지 확인 안 해봄     // 앨범 id 유효성 검사하는 함수 작성
@@ -334,21 +382,21 @@ public class UpdateService {
             System.out.println("6. Exit");
             System.out.print("Enter your choice: ");
             int choice = scanner.nextInt();
-            scanner.nextLine(); // Consume newline
+            scanner.nextLine();
 
             String query = "";
             PreparedStatement pstmt;
+
             switch (choice) {
                 case 1:
                     System.out.print("Enter new Name: ");
-                    String newName = scanner.nextLine();
+                    String newName = scanner.nextLine().trim();
                     query = "UPDATE Manager SET Manager_Name = ? WHERE Manager_Id = ?";
                     pstmt = DatabaseUtil.getConnection().prepareStatement(query);
                     pstmt.setString(1, newName);
                     pstmt.setInt(2, AuthUtil.currentManagerId);
                     break;
                 case 2:
-                    System.out.print("Enter new Phone Number (11 digits, no hyphens): ");
                     String newPhoneNumber = ValidationUtil.getValidPhoneNumber(scanner);
                     query = "UPDATE Manager SET Manager_Phone = ? WHERE Manager_Id = ?";
                     pstmt = DatabaseUtil.getConnection().prepareStatement(query);
@@ -356,7 +404,6 @@ public class UpdateService {
                     pstmt.setInt(2, AuthUtil.currentManagerId);
                     break;
                 case 3:
-                    System.out.print("Enter new Email: ");
                     String newEmail = ValidationUtil.getValidEmail(scanner);
                     query = "UPDATE Manager SET Manager_Email = ? WHERE Manager_Id = ?";
                     pstmt = DatabaseUtil.getConnection().prepareStatement(query);
@@ -366,18 +413,17 @@ public class UpdateService {
                     break;
                 case 4:
                     System.out.print("Enter new Password: ");
-                    String newPassword = scanner.nextLine();
+                    String newPassword = scanner.nextLine().trim();
                     query = "UPDATE Manager SET Manager_Password = ? WHERE Manager_Id = ?";
                     pstmt = DatabaseUtil.getConnection().prepareStatement(query);
                     pstmt.setString(1, newPassword);
                     pstmt.setInt(2, AuthUtil.currentManagerId);
                     break;
                 case 5:
-                    System.out.print("Enter new PIN: ");
-                    String newPin = scanner.nextLine();
+                    int newPin = getValidManagerPin(scanner);
                     query = "UPDATE Manager SET Manager_PIN = ? WHERE Manager_Id = ?";
                     pstmt = DatabaseUtil.getConnection().prepareStatement(query);
-                    pstmt.setString(1, newPin);
+                    pstmt.setInt(1, newPin);
                     pstmt.setInt(2, AuthUtil.currentManagerId);
                     break;
                 case 6:
@@ -391,17 +437,17 @@ public class UpdateService {
             int rows = pstmt.executeUpdate();
             if (rows > 0) {
                 System.out.println("Information updated successfully!");
+                // Audit 로그 기록
+                AuditService auditService = new AuditService();
+                auditService.logAction(AuthUtil.currentManagerId, "Manager", "UPDATE");
             } else {
                 System.out.println("Failed to update information.");
             }
 
+        } catch (SQLException e) {
+            System.out.println("Database error while updating manager: " + e.getMessage());
         } catch (Exception e) {
-            System.out.println("Error while updating information: " + e.getMessage());
+            System.out.println("Unexpected error while updating manager: " + e.getMessage());
         }
     }
-
-
-
-
-
 }

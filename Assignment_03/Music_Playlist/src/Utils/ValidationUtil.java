@@ -9,6 +9,8 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Scanner;
 
+import static Auth.AuthUtil.currentManagerId;
+
 public class ValidationUtil {
 
     // 유효한 이메일 반환 함수
@@ -20,6 +22,12 @@ public class ValidationUtil {
 
             if (!email.matches("^[\\w.-]+@[\\w.-]+\\.[a-zA-Z]{2,}$")) {
                 System.out.println("This email is not valid. Please try with a valid email.");
+                continue;
+            }
+
+            // 중복 확인
+            if (isDuplicateEmail(email)) {
+                System.out.println("This email is already in use. Please try another email.");
                 continue;
             }
 
@@ -70,7 +78,7 @@ public class ValidationUtil {
         LocalDate date = null;
 
         while (date == null) {
-            System.out.print("Enter Debut or Release Date (YYYYMMDD or YYYY-MM-DD): ");
+            System.out.print("Enter Date (YYYYMMDD or YYYY-MM-DD): ");
             String dateInput = scanner.nextLine().trim();
 
             if (dateInput.isEmpty()) {
@@ -101,6 +109,7 @@ public class ValidationUtil {
         while (!isValid) {
             System.out.print("Enter Artist ID: ");
             artistId = scanner.nextInt();
+            scanner.nextLine();
 
             try {
                 // DB에서 Artist ID 존재 여부 확인
@@ -122,4 +131,128 @@ public class ValidationUtil {
         }
         return artistId;
     }
+
+    // 유효한 앨범 ID 반환 함수
+    public static int getValidAlbumID(Scanner scanner) {
+        int albumId = -1;  // 앨범 ID 초깃값
+        boolean isValid = false;  // 유효성 플래그
+
+        while (!isValid) {
+            System.out.print("Enter Album ID: ");
+            albumId = scanner.nextInt();
+            scanner.nextLine();
+
+            try {
+                // DB에서 Album ID 존재 여부 확인
+                String query = "SELECT Album_Id FROM Album WHERE Album_Id = ?";
+                PreparedStatement pstmt = DatabaseUtil.getConnection().prepareStatement(query);
+                pstmt.setInt(1, albumId);
+                ResultSet rs = pstmt.executeQuery();
+
+                if (rs.next()) {
+                    isValid = true;  // Album ID가 유효하면 반복 종료
+                } else {
+                    System.out.println("Invalid Album ID. Please enter a valid ID.");
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.out.println("Error while validating Album ID. Try again.");
+            }
+        }
+        return albumId;
+    }
+
+    // 유효한 음악 ID 반환 함수
+    public static int getValidMusicID(Scanner scanner) {
+        int musicId = -1;  // 음악 ID 초깃값
+        boolean isValid = false;  // 유효성 플래그
+
+        while (!isValid) {
+            System.out.print("Enter Music ID: ");
+            musicId = scanner.nextInt();
+            scanner.nextLine();
+
+            try {
+                // DB에서 Music ID 존재 여부 확인
+                String query = "SELECT Music_Id FROM Music WHERE Music_Id = ?";
+                PreparedStatement pstmt = DatabaseUtil.getConnection().prepareStatement(query);
+                pstmt.setInt(1, musicId);
+                ResultSet rs = pstmt.executeQuery();
+
+                if (rs.next()) {
+                    isValid = true;  // Music ID가 유효하면 반복 종료
+                } else {
+                    System.out.println("Invalid Music ID. Please enter a valid ID.");
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.out.println("Error while validating Music ID. Try again.");
+            }
+        }
+        return musicId;
+    }
+
+    // 유효한 장르 ID 반환 함수
+    public static int getValidGenreID(Scanner scanner) {
+        int genreId = -1;  // 장르 ID 초깃값
+        boolean isValid = false;  // 유효성 플래그
+
+        while (!isValid) {
+            System.out.print("Enter Genre ID: ");
+            genreId = scanner.nextInt();
+            scanner.nextLine();
+
+            try {
+                // DB에서 Genre ID 존재 여부 확인
+                String query = "SELECT Genre_Id FROM Genre WHERE Genre_Id = ?";
+                PreparedStatement pstmt = DatabaseUtil.getConnection().prepareStatement(query);
+                pstmt.setInt(1, genreId);
+                ResultSet rs = pstmt.executeQuery();
+
+                if (rs.next()) {
+                    isValid = true;  // Genre ID가 유효하면 반복 종료
+                } else {
+                    System.out.println("Invalid Genre ID. Please enter a valid ID.");
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.out.println("Error while validating Genre ID. Try again.");
+            }
+        }
+        return genreId;
+    }
+
+    // 중복 이메일 확인 함수
+    private static boolean isDuplicateEmail(String email) {
+        try {
+            String query = "SELECT Manager_Id FROM Manager WHERE Manager_Email = ? AND Manager_Id != ?";
+            PreparedStatement pstmt = DatabaseUtil.getConnection().prepareStatement(query);
+            pstmt.setString(1, email);
+            pstmt.setInt(2, currentManagerId); // 현재 로그인된 manager 제외
+            ResultSet rs = pstmt.executeQuery();
+            return rs.next(); // 중복된 이메일이 있으면 true 반환
+        } catch (Exception e) {
+            e.printStackTrace();
+            return true; // 에러 발생 시 중복으로 간주
+        }
+    }
+
+    // 중복 아티스트 이름 확인 함수
+    public static boolean isDuplicateArtistName(String artistName) {
+        try {
+            String query = "SELECT Artist_Id FROM Artist WHERE LOWER(Artist_Name) = ?";
+            PreparedStatement pstmt = DatabaseUtil.getConnection().prepareStatement(query);
+            pstmt.setString(1, artistName);
+            ResultSet rs = pstmt.executeQuery();
+            return rs.next(); // 결과가 존재하면 중복
+        } catch (Exception e) {
+            e.printStackTrace();
+            return true; // 에러 발생 시 중복으로 간주
+        }
+    }
+
+
 }

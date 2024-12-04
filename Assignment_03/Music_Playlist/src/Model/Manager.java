@@ -1,5 +1,6 @@
 package Model;
 
+import Auth.AuthUtil;
 import Security.DatabaseUtil;
 import Service.*;
 
@@ -11,6 +12,8 @@ public class Manager {
     private AddService addService = new AddService();
     private SearchService searchService = new SearchService();
     private UpdateService updateService = new UpdateService();
+    private DeleteService deleteService = new DeleteService();
+    private ViewService viewService = new ViewService();
 
     public void showManagerMenu(String managerName) {
 
@@ -18,11 +21,11 @@ public class Manager {
         int choice;
 
         do {
-            System.out.println("\nWelcome, Manager " + managerName + "! Ready to oversee the music platform?\n");
+            System.out.println("\nWelcome, Manager " + getManagerName() + "! Ready to oversee the music platform?\n");
             System.out.println("1. Add");
             System.out.println("2. Search");
             System.out.println("3. Update");
-            System.out.println("4. Delete Music");
+            System.out.println("4. Delete");
             System.out.println("5. View Reports");
             System.out.println("6. Logout");
             System.out.print("Enter your choice: ");
@@ -39,10 +42,10 @@ public class Manager {
                     updateService.updateOption();
                     break;
                 case 4:
-                    deleteMusic();
+                    deleteService.deleteOption();
                     break;
                 case 5:
-                    viewReports();
+                    viewService.viewOption();
                     break;
                 case 6:
                     System.out.println("Logging out...");
@@ -68,23 +71,21 @@ public class Manager {
         // Add database query logic
     }
 
-    private void viewReports() {
-        System.out.println("Viewing reports...");
-        // Add database query logic
-    }
 
-    public String getManagerName(String email) {
+
+    public String getManagerName() {
         try {
-            String query = "SELECT Manager_Name FROM Manager WHERE Manager.Manager_Email = ?";
+            String query = "SELECT Manager_Name FROM Manager WHERE Manager_Id = ?";
             PreparedStatement pstmt = DatabaseUtil.getConnection().prepareStatement(query);
-            pstmt.setString(1, email);  // 첫 번쨰 매개변수에 email 값 설정
-            ResultSet rs = pstmt.executeQuery();  // query 실행
-            if (rs.next()) {  // query의 결과 존재
-                return rs.getString("Manager_Name");  // 필드 값 반환
+            pstmt.setInt(1, AuthUtil.currentManagerId); // 현재 로그인된 Manager의 ID 사용
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getString("Manager_Name"); // DB에서 Manager 이름 가져오기
             }
         } catch (Exception e) {
-            e.printStackTrace();  // 예외 발생 시 출력
+            e.printStackTrace();
         }
-        return "Manager";  // 결과가 없거나 예외 발생 시 기본값 반환
+        return "Manager"; // 기본값 반환
     }
+
 }

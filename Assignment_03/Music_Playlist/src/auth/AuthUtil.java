@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 
 public class AuthUtil {
     public static int currentManagerId = -1;  // 로그인된 매니저 ID 저장 (기본값 -1)
+    public static int currentUserId = -1;  // 로그인된 사용자 ID 저장 (기본값 -1)
 
     public static boolean isManager(String email, String password) {
         try {
@@ -33,11 +34,14 @@ public class AuthUtil {
             pstmt.setString(1, email);
             pstmt.setString(2, password);
             ResultSet rs = pstmt.executeQuery();
-            return rs.next();
+            if (rs.next()) {
+                currentUserId = rs.getInt("User_Id"); // 로그인된 매니저 ID 저장
+                return true;
+            }
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
         }
+        return false;
     }
 
     public static boolean validateManagerPin(String email, String password, int pin) {

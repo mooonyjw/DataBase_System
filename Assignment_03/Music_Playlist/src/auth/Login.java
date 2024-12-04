@@ -60,7 +60,7 @@ public class Login {
             int pin = scanner.nextInt();
             if (validateManagerPin(email, password, pin)) {
                 Manager manager = new Manager();
-                manager.showManagerMenu(manager.getManagerName(email));
+                manager.showManagerMenu(manager.getManagerName());
             } else {
                 System.out.println("Invalid Manager PIN. Access denied.");
             }
