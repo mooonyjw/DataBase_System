@@ -9,66 +9,92 @@ public class ListenedService {
     public void showListenHistory(int userId) {
         try {
             String query = """
-                SELECT m.Title, l.Total_Listening_Time, l.Listening_Date
-                FROM Listens l
-                JOIN Music m ON l.musicId = m.Music_Id
-                WHERE l.userId = ?
-                ORDER BY l.Listening_Date DESC
-                """;
+            SELECT m.Title, m.Length, a.Album_Name, ar.Artist_Name, l.m_Timestamp
+            FROM Listens l
+            JOIN Music m ON l.musicId = m.Music_Id
+            JOIN Album a ON m.albumId = a.Album_Id
+            JOIN Artist ar ON a.artistId = ar.Artist_Id
+            WHERE l.userId = ?
+            ORDER BY l.m_Timestamp DESC
+            LIMIT 10
+        """;
             PreparedStatement pstmt = DatabaseUtil.getConnection().prepareStatement(query);
             pstmt.setInt(1, userId);
             ResultSet rs = pstmt.executeQuery();
 
-            System.out.println("\n--- Listen History ---");
-            System.out.println("Title | Total Listening Time (seconds) | Last Listening Date");
-            while (rs.next()) {
-                String title = rs.getString("Title");
-                int totalListeningTime = rs.getInt("Total_Listening_Time");
-                String listeningDate = rs.getString("Listening_Date");
+            System.out.println("\n--- Recent Listens ---");
+            System.out.printf("%-30s | %-7s | %-20s | %-20s | %-20s%n", "Title", "Length", "Album", "Artist", "Timestamp");
+            System.out.println("-----------------------------------------------------------------------------------------------------");
 
-                System.out.println(title + " | " + totalListeningTime + " | " + listeningDate);
+            while (rs.next()) {
+                System.out.printf("%-30s | %-7d | %-20s | %-20s | %-20s%n",
+                        rs.getString("Title"),
+                        rs.getInt("Length"),
+                        rs.getString("Album_Name"),
+                        rs.getString("Artist_Name"),
+                        rs.getString("m_Timestamp"));
             }
+
         } catch (Exception e) {
-            System.out.println("Error fetching listen history: " + e.getMessage());
+            System.out.println("Error while fetching recent listens: " + e.getMessage());
         }
     }
 
     static void updateListenHistory(int userId, int musicId, int listeningTime) {
         try {
-            // 먼저 기존 기록 확인
-            String checkQuery = "SELECT * FROM Listens WHERE userId = ? AND musicId = ?";
-            PreparedStatement checkStmt = DatabaseUtil.getConnection().prepareStatement(checkQuery);
-            checkStmt.setInt(1, userId);
-            checkStmt.setInt(2, musicId);
-            ResultSet rs = checkStmt.executeQuery();
+            // 청취 기록 삽입 또는 업데이트
+            String query = """
+        INSERT INTO Listens (musicId, userId, Total_Listening_Time, m_TimeStamp)
+        VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+        ON DUPLICATE KEY UPDATE
+            Total_Listening_Time = Total_Listening_Time + VALUES(Total_Listening_Time),
+            m_TimeStamp = CURRENT_TIMESTAMP
+        """;
+            PreparedStatement pstmt = DatabaseUtil.getConnection().prepareStatement(query);
+            pstmt.setInt(1, musicId);
+            pstmt.setInt(2, userId);
+            pstmt.setInt(3, listeningTime);
+            pstmt.executeUpdate();
 
-            if (rs.next()) {
-                // 기존 기록이 있을 경우 업데이트
-                String updateQuery = """
-                    UPDATE Listens 
-                    SET Total_Listening_Time = Total_Listening_Time + ?, 
-                        Listening_Date = CURDATE() 
-                    WHERE userId = ? AND musicId = ?
-                    """;
-                PreparedStatement updateStmt = DatabaseUtil.getConnection().prepareStatement(updateQuery);
-                updateStmt.setInt(1, listeningTime);
-                updateStmt.setInt(2, userId);
-                updateStmt.setInt(3, musicId);
-                updateStmt.executeUpdate();
-            } else {
-                // 기존 기록이 없을 경우 새로 삽입
-                String insertQuery = """
-                    INSERT INTO Listens (musicId, userId, Total_Listening_Time, Listening_Date) 
-                    VALUES (?, ?, ?, CURDATE())
-                    """;
-                PreparedStatement insertStmt = DatabaseUtil.getConnection().prepareStatement(insertQuery);
-                insertStmt.setInt(1, musicId);
-                insertStmt.setInt(2, userId);
-                insertStmt.setInt(3, listeningTime);
-                insertStmt.executeUpdate();
-            }
+            System.out.println("Listen history updated successfully.");
         } catch (Exception e) {
             System.out.println("Error updating listen history: " + e.getMessage());
+        }
+    }
+    public void viewMostPlayedSongs(int userId) {
+        try {
+            String query = """
+        SELECT m.Title, SUM(l.Total_Listening_Time) AS TotalListeningTime, a.Album_Name, ar.Artist_Name
+        FROM Listens l
+        JOIN Music m ON l.musicId = m.Music_Id
+        JOIN Album a ON m.albumId = a.Album_Id
+        JOIN Artist ar ON a.artistId = ar.Artist_Id
+        WHERE l.userId = ?
+        GROUP BY m.Music_Id
+        ORDER BY TotalListeningTime DESC
+        LIMIT 10
+        """;
+
+            PreparedStatement pstmt = DatabaseUtil.getConnection().prepareStatement(query);
+            pstmt.setInt(1, userId);
+
+            ResultSet rs = pstmt.executeQuery();
+
+            System.out.println("\n--- Most Played Songs by Listening Time ---");
+            System.out.printf("%-30s | %-20s | %-20s | %-20s%n", "Title", "Total Listening Time (seconds)", "Album", "Artist");
+            System.out.println("---------------------------------------------------------------------------------------------");
+
+            while (rs.next()) {
+                System.out.printf(
+                        "%-30s | %-30d | %-20s | %-20s%n",
+                        rs.getString("Title"),
+                        rs.getInt("TotalListeningTime"),
+                        rs.getString("Album_Name"),
+                        rs.getString("Artist_Name")
+                );
+            }
+        } catch (Exception e) {
+            System.out.println("Error retrieving most-played songs: " + e.getMessage());
         }
     }
 

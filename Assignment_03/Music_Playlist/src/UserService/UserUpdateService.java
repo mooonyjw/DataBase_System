@@ -12,7 +12,7 @@ import java.util.Scanner;
 import static Utils.ValidationUtil.getValidManagerPin;
 
 public class UserUpdateService {
-    public void updateManager() {
+    public void updateUser() {
         Scanner scanner = new Scanner(System.in);
 
         try {
@@ -21,7 +21,7 @@ public class UserUpdateService {
             System.out.println("2. Phone");
             System.out.println("3. Email");
             System.out.println("4. Password");
-            System.out.println("5. Exit");
+            System.out.println("5. Go back to main menu");
             System.out.print("Enter your choice: ");
             int choice = scanner.nextInt();
             scanner.nextLine();
