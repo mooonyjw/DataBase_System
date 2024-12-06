@@ -50,7 +50,7 @@ public class SearchService {
     }
 
     // Artist ID 찾기
-    public int searchArtistId() {
+    public void searchArtistId() {
         Scanner scanner = new Scanner(System.in);
         int artistId = -1;
         try {
@@ -82,7 +82,6 @@ public class SearchService {
         } catch (Exception e) {
             System.out.println("Unexpected error: " + e.getMessage());
         }
-        return artistId;
     }
 
     // Artist 이름 찾기
@@ -124,7 +123,7 @@ public class SearchService {
 //    }
 //
     // Album ID 찾기
-    public int searchAlbumId() {
+    public void searchAlbumId() {
         Scanner scanner = new Scanner(System.in);
         int albumId = -1;
         try {
@@ -152,17 +151,7 @@ public class SearchService {
                 System.out.println("Found Album: ID = " + rs.getInt("Album_Id") + ", Name = " + rs.getString("Album_Name"));
             }
 
-            if (albumIds.size() == 1) {
-                albumId = albumIds.get(0);
-            } else if (albumIds.size() > 1) {
-                System.out.println("Multiple albums found. Please choose the correct Album ID:");
-                for (int id : albumIds) {
-                    System.out.println("ID: " + id);
-                }
-                System.out.print("Enter the correct Album ID: ");
-                albumId = scanner.nextInt();
-                scanner.nextLine();
-            } else {
+            if (albumIds.isEmpty()) {
                 System.out.println("Album not found. Please try again.");
             }
 
@@ -171,12 +160,10 @@ public class SearchService {
         } catch (Exception e) {
             System.out.println("Unexpected error while searching for Album ID: " + e.getMessage());
         }
-
-        return albumId;
     }
 
     // Music ID 찾기
-    public int searchMusicId() {
+    public void searchMusicId() {
         Scanner scanner = new Scanner(System.in);
         int musicId = -1;
 
@@ -207,17 +194,7 @@ public class SearchService {
                 System.out.println("Found Music: ID = " + rs.getInt("Music_Id") + ", Title = " + rs.getString("Title"));
             }
 
-            if (musicIds.size() == 1) {
-                musicId = musicIds.get(0);
-            } else if (musicIds.size() > 1) {
-                System.out.println("Multiple music entries found. Please choose the correct Music ID:");
-                for (int id : musicIds) {
-                    System.out.println("ID: " + id);
-                }
-                System.out.print("Enter the correct Music ID: ");
-                musicId = scanner.nextInt();
-                scanner.nextLine(); // Clear buffer
-            } else {
+            if (musicIds.isEmpty()) {
                 System.out.println("Music not found. Please try again.");
             }
 
@@ -226,12 +203,10 @@ public class SearchService {
         } catch (Exception e) {
             System.out.println("Unexpected error while searching for Music ID: " + e.getMessage());
         }
-
-        return musicId;
     }
 
     // Genre ID 찾기
-    public int searchGenreId() {
+    public void searchGenreId() {
         Scanner scanner = new Scanner(System.in);
         int genreId = -1;
 
@@ -267,6 +242,5 @@ public class SearchService {
         } catch (Exception e) {
             System.out.println("Unexpected error while searching for Genre ID: " + e.getMessage());
         }
-        return genreId;
     }
 }

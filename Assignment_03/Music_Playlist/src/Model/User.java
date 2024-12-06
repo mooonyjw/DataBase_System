@@ -68,7 +68,8 @@ public class User {
                             System.out.println("1. Create Playlist");
                             System.out.println("2. View Playlists");
                             System.out.println("3. Edit a Playlist");
-                            System.out.println("4. Go back to main menu");
+                            System.out.println("4. Delete Playlist");
+                            System.out.println("5. Go back to main menu");
                             System.out.print("Enter your choice: ");
 
                             subChoice = scanner.nextInt();
@@ -85,12 +86,15 @@ public class User {
                                     playlistService.editPlaylist(AuthUtil.currentUserId);
                                     break;
                                 case 4:
+                                    playlistService.removePlaylist(AuthUtil.currentUserId);
+                                    break;
+                                case 5:
                                     System.out.println("Going back to main menu...");
-                                    break; // 서브 메뉴 반복 종료
+                                    break;
                                 default:
                                     System.out.println("Invalid choice. Please try again.");
                             }
-                        } while (subChoice != 4);
+                        } while (subChoice != 5);
                         break; // 메인 메뉴로 복귀
                     case 3:
                         do {

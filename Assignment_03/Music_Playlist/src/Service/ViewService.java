@@ -1,10 +1,13 @@
 package Service;
 
+import Auth.AuthUtil;
 import Security.DatabaseUtil;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 public class ViewService {
@@ -16,8 +19,10 @@ public class ViewService {
         System.out.println("3. Music");
         System.out.println("4. Genre");
         System.out.println("5. View Reports");
-        System.out.println("6. Back to main menu");
-        System.out.println("7. Exit");
+        System.out.println("6. View User Information");
+        System.out.println("7. View Manager Information");
+        System.out.println("8. Back to main menu");
+        System.out.println("9. Exit");
         System.out.print("Enter your choice: ");
 
         int addChoice = scanner.nextInt();
@@ -147,10 +152,73 @@ public class ViewService {
                 viewReports();
                 return;
             case 6:
+                try {
+                    String query = "SELECT * FROM User";
+                    PreparedStatement pstmt = DatabaseUtil.getConnection().prepareStatement(query);
+                    ResultSet rs = pstmt.executeQuery();
+
+                    System.out.println("\n--- All User Information ---");
+                    System.out.printf("%-10s | %-20s | %-30s | %-15s | %-12s%n", "User ID", "Name", "Email", "Phone", "Sign-Up Date");
+                    System.out.println("--------------------------------------------------------------------------------------------------------");
+                    List<Integer> UserIds = new ArrayList<>();
+                    while (rs.next()) {
+                        UserIds.add(rs.getInt("User_Id"));
+                        System.out.printf(
+                            "%-10d | %-20s | %-30s | %-15s | %-12s%n",
+                            rs.getInt("User_Id"),
+                            rs.getString("User_Name"),
+                            rs.getString("User_Email"),
+                            rs.getString("User_Phone"),
+                            rs.getDate("Sign_up_Date")
+                        );
+                    }
+                    if (UserIds.isEmpty()) {
+                        System.out.println("User not found.");
+                    }
+                } catch (SQLException e) {
+                    System.out.println("Error while printing: " + e.getMessage());
+                } catch (Exception e) {
+                    System.out.println("Unexpected error: " + e.getMessage());
+                }
+
+                break;
+            case 7:
+                try {
+                    String query = "SELECT * FROM Manager";
+                    PreparedStatement pstmt = DatabaseUtil.getConnection().prepareStatement(query);
+                    ResultSet rs = pstmt.executeQuery();
+
+
+                    System.out.println("\n--- All Manager Information ---");
+                    System.out.printf("%-12s | %-20s | %-30s | %-15s%n", "Manager ID", "Name", "Email", "Phone");
+                    System.out.println("-------------------------------------------------------------------------------------");
+                    List<Integer> managerIds = new ArrayList<>();
+                    while (rs.next()) {
+                        managerIds.add(rs.getInt("Manager_Id"));
+                        System.out.printf(
+                            "%-12d | %-20s | %-30s | %-15s%n",
+                            rs.getInt("Manager_Id"),
+                            rs.getString("Manager_Name"),
+                            rs.getString("Manager_Email"),
+                            rs.getString("Manager_Phone")
+                        );
+                    }
+                    if (managerIds.isEmpty()) {
+                        System.out.println("Manager not found.");
+                    }
+                } catch (SQLException e) {
+                    System.out.println("Error while printing: " + e.getMessage());
+                } catch (Exception e) {
+                    System.out.println("Unexpected error: " + e.getMessage());
+                }
+
+                break;
+
+            case 8:
                 System.out.println("Returning to main menu.");
                 return;
 
-            case 7:
+            case 9:
                 System.out.println("Exiting the program. Goodbye!");
                 System.exit(0);
                 break;

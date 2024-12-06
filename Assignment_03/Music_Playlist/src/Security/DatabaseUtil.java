@@ -11,7 +11,6 @@ public class DatabaseUtil {
     private static final String USER =  System.getenv("DBUSER"); // MySQL 사용자 이름
     private static final String PASSWORD =  System.getenv("DBPASSWORD"); // MySQL 비밀번호
 
-
     public static Connection getConnection() {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");

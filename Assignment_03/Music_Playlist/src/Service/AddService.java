@@ -225,7 +225,7 @@ public class AddService {
                 updateAlbumTotalTracks(albumId);
                 // Audit 로그 기록
                 AuditService auditService = new AuditService();
-                auditService.logAction(AuthUtil.currentManagerId, "Album", "CREATE");
+                auditService.logAction(AuthUtil.currentManagerId, "Music", "CREATE");
             } else {
                 System.out.println("Failed to add music.");
             }

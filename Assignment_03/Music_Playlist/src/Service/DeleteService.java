@@ -22,10 +22,9 @@ public class DeleteService {
         System.out.println("2. Album");
         System.out.println("3. Music");
         System.out.println("4. Genre");
-        System.out.println("5. Manager");
-        System.out.println("6. User");
-        System.out.println("7. Back to main menu");
-        System.out.println("8. Exit");
+        System.out.println("5. User");
+        System.out.println("6. Back to main menu");
+        System.out.println("7. Exit");
         System.out.print("Enter your choice: ");
         int deleteChoice = scanner.nextInt();
         scanner.nextLine();
@@ -44,15 +43,12 @@ public class DeleteService {
                 deleteGenre();
                 break;
             case 5:
-                deleteManager();
-                break;
-            case 6:
                 deleteUser();
                 break;
-            case 7:
+            case 6:
                 System.out.println("Returning to main menu.");
                 return;
-            case 8:
+            case 7:
                 System.out.println("Exiting the program. Goodbye!");
                 System.exit(0);
                 break;
@@ -296,42 +292,48 @@ public class DeleteService {
         }
     }
 
-    private void deleteManager() {
-        Scanner scanner = new Scanner(System.in);
-
-        try {
-            int managerId = getValidManagerId(scanner);
-
-            // 삭제 확인
-            System.out.print("Are you sure you want to delete this manager? (y/n): ");
-            String confirmation = scanner.nextLine().trim();
-            if (!confirmation.equalsIgnoreCase("y")) {
-                System.out.println("Manager deletion cancelled.");
-                return;
-            }
-
-            // 관리자 삭제
-            String query = "DELETE FROM Manager WHERE Manager_Id = ?";
-            PreparedStatement preparedStatement = DatabaseUtil.getConnection().prepareStatement(query);
-            preparedStatement.setInt(1, managerId);
-            int rows = preparedStatement.executeUpdate();
-
-            if (rows > 0) {
-                System.out.println("Manager deleted successfully!");
-
-                // Audit 로그 기록
-                AuditService auditService = new AuditService();
-                auditService.logAction(AuthUtil.currentManagerId, "Manager", "DELETE");
-            } else {
-                System.out.println("No manager found with the given ID.");
-            }
-
-        } catch (SQLException e) {
-            System.out.println("Error deleting manager: " + e.getMessage());
-        } catch (Exception e) {
-            System.out.println("Unexpected error occurred: " + e.getMessage());
-        }
-    }
+//    private void deleteManager() {
+//        Scanner scanner = new Scanner(System.in);
+//
+//        try {
+//            int managerId = getValidManagerId(scanner);
+//
+//            // 자기 자신인지 확인
+//            if (managerId == AuthUtil.currentManagerId) {
+//                System.out.println("You cannot delete your own account.");
+//                return;
+//            }
+//
+//            // 삭제 확인
+//            System.out.print("Are you sure you want to delete this manager? (y/n): ");
+//            String confirmation = scanner.nextLine().trim();
+//            if (!confirmation.equalsIgnoreCase("y")) {
+//                System.out.println("Manager deletion cancelled.");
+//                return;
+//            }
+//
+//            // 관리자 삭제
+//            String query = "DELETE FROM Manager WHERE Manager_Id = ?";
+//            PreparedStatement preparedStatement = DatabaseUtil.getConnection().prepareStatement(query);
+//            preparedStatement.setInt(1, managerId);
+//            int rows = preparedStatement.executeUpdate();
+//
+//            if (rows > 0) {
+//                System.out.println("Manager deleted successfully!");
+//
+//                // Audit 로그 기록
+//                AuditService auditService = new AuditService();
+//                auditService.logAction(AuthUtil.currentManagerId, "Manager", "DELETE");
+//            } else {
+//                System.out.println("No manager found with the given ID.");
+//            }
+//
+//        } catch (SQLException e) {
+//            System.out.println("Error deleting manager: " + e.getMessage());
+//        } catch (Exception e) {
+//            System.out.println("Unexpected error occurred: " + e.getMessage());
+//        }
+//    }
 
     private void deleteUser() {
         Scanner scanner = new Scanner(System.in);

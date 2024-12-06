@@ -226,6 +226,90 @@ public class PlaylistService {
         }
     }
 
+
+    public void removePlaylist(int userId) {
+        Scanner scanner = new Scanner(System.in);
+        try {
+            // 1. 해당 사용자의 플레이리스트 조회
+            String query = "SELECT Playlist_Id, Playlist_Name FROM Playlist WHERE userId = ?";
+            PreparedStatement pstmt = DatabaseUtil.getConnection().prepareStatement(query);
+            pstmt.setInt(1, userId);
+            ResultSet rs = pstmt.executeQuery();
+
+            System.out.println("\n--- My Playlists ---");
+            if (!rs.isBeforeFirst()) { // 사용자가 플레이리스트가 없는 경우
+                System.out.println("You have no playlists. Create one first!");
+                return;
+            }
+
+            // 플레이리스트 출력
+            System.out.printf("%-5s | %-30s%n", "No.", "Name");
+            System.out.println("-----------------------------------");
+
+            Map<Integer, Integer> playlistMap = new HashMap<>();
+            int index = 1;
+            while (rs.next()) {
+                playlistMap.put(index, rs.getInt("Playlist_Id"));
+                System.out.printf("%-5d | %-30s%n", index, rs.getString("Playlist_Name"));
+                index++;
+            }
+
+            // 2. 사용자 입력
+            System.out.print("\nEnter the number of the playlist you want to delete (or press ENTER to cancel): ");
+            String userInput = scanner.nextLine().trim();
+            if (userInput.isEmpty()) {
+                System.out.println("Delete operation cancelled.");
+                return;
+            }
+
+            try {
+                int selectedIndex = Integer.parseInt(userInput);
+
+                // 유효한 인덱스인지 확인
+                if (!playlistMap.containsKey(selectedIndex)) {
+                    System.out.println("Invalid selection. Please try again.");
+                    return;
+                }
+
+                // 인덱스를 통해 playlistId 가져오기
+                int playlistId = playlistMap.get(selectedIndex);
+
+                // 삭제 확인
+                System.out.print("Are you sure you want to delete this playlist? This action cannot be undone. (y/n): ");
+                String confirmation = scanner.nextLine().trim().toLowerCase();
+
+                if (!confirmation.equals("y")) {
+                    System.out.println("Delete operation cancelled.");
+                    return;
+                }
+
+                // 3. 관련 데이터 삭제 (Contains 테이블)
+                String deleteContainsQuery = "DELETE FROM Contains WHERE playlistId = ?";
+                PreparedStatement deleteContainsStmt = DatabaseUtil.getConnection().prepareStatement(deleteContainsQuery);
+                deleteContainsStmt.setInt(1, playlistId);
+                deleteContainsStmt.executeUpdate();
+
+                // 4. 플레이리스트 삭제
+                String deletePlaylistQuery = "DELETE FROM Playlist WHERE Playlist_Id = ?";
+                PreparedStatement deletePlaylistStmt = DatabaseUtil.getConnection().prepareStatement(deletePlaylistQuery);
+                deletePlaylistStmt.setInt(1, playlistId);
+                int rows = deletePlaylistStmt.executeUpdate();
+
+                if (rows > 0) {
+                    System.out.println("Playlist deleted successfully!");
+                } else {
+                    System.out.println("Failed to delete playlist. It may not exist.");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input. Please enter a valid number.");
+            }
+        } catch (Exception e) {
+            System.out.println("Error deleting playlist: " + e.getMessage());
+        }
+    }
+
+
+
     public void editPlaylist(int userId) {
         Scanner scanner = new Scanner(System.in);
 
@@ -284,8 +368,7 @@ public class PlaylistService {
                 System.out.println("1. Add a Song");
                 System.out.println("2. Remove a Song");
                 System.out.println("3. Rename Playlist");
-                System.out.println("4. Delete Playlist");
-                System.out.println("5. Back to Playlist Menu");
+                System.out.println("4. Back to Playlist Menu");
                 System.out.print("Enter your choice: ");
 
                 int editChoice = scanner.nextInt();
@@ -302,9 +385,6 @@ public class PlaylistService {
                         renamePlaylist(playlistId);
                         break;
                     case 4:
-                        removePlaylist(playlistId);
-                        break;
-                    case 5:
                         System.out.println("Returning to Playlist Menu.");
                         return;
                     default:
@@ -496,44 +576,6 @@ public class PlaylistService {
             System.out.println("Error renaming playlist: " + e.getMessage());
         }
     }
-
-
-
-    private void removePlaylist(int playlistId) {
-        Scanner scanner = new Scanner(System.in);
-        try {
-            // 삭제 확인
-            System.out.print("Are you sure you want to delete this playlist? This action cannot be undone. (y/n): ");
-            String confirmation = scanner.nextLine().trim().toLowerCase();
-
-            if (!confirmation.equals("y")) {
-                System.out.println("Delete operation cancelled.");
-                return;
-            }
-
-            // 1. 관련 데이터 삭제 (Contains 테이블)
-            String deleteContainsQuery = "DELETE FROM Contains WHERE playlistId = ?";
-            PreparedStatement deleteContainsStmt = DatabaseUtil.getConnection().prepareStatement(deleteContainsQuery);
-            deleteContainsStmt.setInt(1, playlistId);
-            deleteContainsStmt.executeUpdate();
-
-            // 2. 플레이리스트 삭제
-            String deletePlaylistQuery = "DELETE FROM Playlist WHERE Playlist_Id = ?";
-            PreparedStatement deletePlaylistStmt = DatabaseUtil.getConnection().prepareStatement(deletePlaylistQuery);
-            deletePlaylistStmt.setInt(1, playlistId);
-            int rows = deletePlaylistStmt.executeUpdate();
-
-            if (rows > 0) {
-                System.out.println("Playlist deleted successfully!");
-            } else {
-                System.out.println("Failed to delete playlist. It may not exist.");
-            }
-
-        } catch (Exception e) {
-            System.out.println("Error deleting playlist: " + e.getMessage());
-        }
-    }
-
 
 
 
