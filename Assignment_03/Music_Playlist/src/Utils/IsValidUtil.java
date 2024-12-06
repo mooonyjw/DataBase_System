@@ -5,6 +5,7 @@ import Security.DatabaseUtil;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class IsValidUtil {
 
@@ -92,5 +93,46 @@ public class IsValidUtil {
         }
     }
 
+    public static boolean isMPhoneTaken(String phone) {
+        try {
+            String query = """
+        SELECT COUNT(*) AS count
+        FROM Manager
+        WHERE Manager_Phone = ?
+        """;
+
+            PreparedStatement pstmt = DatabaseUtil.getConnection().prepareStatement(query);
+            pstmt.setString(1, phone);
+
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("count") > 0; // 중복된 전화번호가 있는 경우 true 반환
+            }
+        } catch (SQLException e) {
+            System.out.println("Error checking phone: " + e.getMessage());
+        }
+        return false; // 중복된 전화번호가 없으면 false 반환
+    }
+
+    public static boolean isUPhoneTaken(String phone) {
+        try {
+            String query = """
+        SELECT COUNT(*) AS count
+        FROM User
+        WHERE User_Phone = ?
+        """;
+
+            PreparedStatement pstmt = DatabaseUtil.getConnection().prepareStatement(query);
+            pstmt.setString(1, phone);
+
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("count") > 0; // 중복된 전화번호가 있는 경우 true 반환
+            }
+        } catch (SQLException e) {
+            System.out.println("Error checking user phone: " + e.getMessage());
+        }
+        return false; // 중복된 전화번호가 없으면 false 반환
+    }
 
 }

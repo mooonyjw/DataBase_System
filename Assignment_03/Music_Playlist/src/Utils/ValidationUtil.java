@@ -4,6 +4,7 @@ import Security.DatabaseUtil;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -26,7 +27,7 @@ public class ValidationUtil {
             }
 
             // 중복 확인
-            if (isDuplicateEmail(email)) {
+            if (isEmailTaken(email)) {
                 System.out.println("This email is already in use. Please try another email.");
                 continue;
             }
@@ -56,6 +57,36 @@ public class ValidationUtil {
         return phone;
     }
 
+    public static int getValidManagerId(Scanner scanner) {
+        int managerId = -1;  // 관리자 ID 초깃값
+        boolean isValid = false;  // 유효성 플래그
+
+        while (!isValid) {
+            System.out.print("Enter Manager ID: ");
+            managerId = scanner.nextInt();
+            scanner.nextLine();
+
+            try {
+                // DB에서 Manager ID 존재 여부 확인
+                String query = "SELECT Manager_Id FROM Manager WHERE Manager_Id = ?";
+                PreparedStatement pstmt = DatabaseUtil.getConnection().prepareStatement(query);
+                pstmt.setInt(1, managerId);
+                ResultSet rs = pstmt.executeQuery();
+
+                if (rs.next()) {
+                    isValid = true;  // Manager ID가 유효하면 반복 종료
+                } else {
+                    System.out.println("Invalid Manager ID. Please enter a valid ID.");
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.out.println("Error while validating Manager ID. Try again.");
+            }
+        }
+        return managerId;
+    }
+
     // 유효한 관리자 PIN 반환 함수
     public static int getValidManagerPin(Scanner scanner) {
         String pin;
@@ -71,6 +102,36 @@ public class ValidationUtil {
                 System.out.println("Invalid PIN. Please enter exactly 4 digits.");
             }
         } while (true);
+    }
+
+    public static int getValidUserId(Scanner scanner) {
+        int userId = -1;  // 사용자 ID 초깃값
+        boolean isValid = false;  // 유효성 플래그
+
+        while (!isValid) {
+            System.out.print("Enter User ID: ");
+            userId = scanner.nextInt();
+            scanner.nextLine();
+
+            try {
+                // DB에서 User ID 존재 여부 확인
+                String query = "SELECT User_Id FROM User WHERE User_Id = ?";
+                PreparedStatement pstmt = DatabaseUtil.getConnection().prepareStatement(query);
+                pstmt.setInt(1, userId);
+                ResultSet rs = pstmt.executeQuery();
+
+                if (rs.next()) {
+                    isValid = true;  // User ID가 유효하면 반복 종료
+                } else {
+                    System.out.println("Invalid User ID. Please enter a valid ID.");
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.out.println("Error while validating User ID. Try again.");
+            }
+        }
+        return userId;
     }
 
     // 유효한 날짜 반환 함수
@@ -165,10 +226,11 @@ public class ValidationUtil {
 
     // 유효한 음악 ID 반환 함수
     public static int getValidMusicID(Scanner scanner) {
-        int musicId = -1;  // 음악 ID 초깃값
-        boolean isValid = false;  // 유효성 플래그
+        int musicId = -1; // 초기값
+        int maxAttempts = 3; // 최대 시도 횟수
+        int attempts = 0; // 현재 시도 횟수
 
-        while (!isValid) {
+        while (attempts < maxAttempts) {
             System.out.print("Enter Music ID: ");
             musicId = scanner.nextInt();
             scanner.nextLine();
@@ -181,17 +243,24 @@ public class ValidationUtil {
                 ResultSet rs = pstmt.executeQuery();
 
                 if (rs.next()) {
-                    isValid = true;  // Music ID가 유효하면 반복 종료
+                    System.out.println("Valid Music ID selected.");
+                    return musicId; // 유효한 ID가 입력되면 반환
                 } else {
-                    System.out.println("Invalid Music ID. Please enter a valid ID.");
+                    System.out.println("Invalid Music ID. Please try again.");
                 }
-
             } catch (Exception e) {
+                System.out.println("Error while validating Music ID. Please try again.");
                 e.printStackTrace();
-                System.out.println("Error while validating Music ID. Try again.");
+            }
+
+            attempts++;
+            if (attempts < maxAttempts) {
+                System.out.println("Attempts remaining: " + (maxAttempts - attempts));
             }
         }
-        return musicId;
+
+        System.out.println("Maximum attempts reached. Returning to the previous menu.");
+        return -1; // 모든 시도가 실패하면 -1 반환
     }
 
     // 유효한 장르 ID 반환 함수
@@ -238,6 +307,31 @@ public class ValidationUtil {
             e.printStackTrace();
             return true; // 에러 발생 시 중복으로 간주
         }
+    }
+
+    public static boolean isEmailTaken(String email) {
+        try {
+            String query = """
+            SELECT COUNT(*) AS count
+            FROM (
+                SELECT User_Email AS Email FROM User
+                UNION ALL
+                SELECT Manager_Email AS Email FROM Manager
+            ) AS AllEmails
+            WHERE Email = ?
+        """;
+
+            PreparedStatement pstmt = DatabaseUtil.getConnection().prepareStatement(query);
+            pstmt.setString(1, email);
+
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("count") > 0;
+            }
+        } catch (SQLException e) {
+            System.out.println("Error checking email: " + e.getMessage());
+        }
+        return true;
     }
 
     // 중복 아티스트 이름 확인 함수

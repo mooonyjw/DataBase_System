@@ -9,7 +9,10 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Scanner;
 
-import static Utils.ValidationUtil.getValidManagerPin;
+import static Auth.AuthUtil.hashPassword;
+import static Auth.Register.*;
+import static Utils.IsValidUtil.*;
+import static Utils.ValidationUtil.*;
 
 public class UserUpdateService {
     public void updateUser() {
@@ -27,7 +30,7 @@ public class UserUpdateService {
             scanner.nextLine();
 
             String query = "";
-            PreparedStatement pstmt;
+            PreparedStatement pstmt = null;
 
             switch (choice) {
                 case 1:
@@ -39,7 +42,17 @@ public class UserUpdateService {
                     pstmt.setInt(2, AuthUtil.currentUserId);
                     break;
                 case 2:
-                    String newPhoneNumber = ValidationUtil.getValidPhoneNumber(scanner);
+                    String newPhoneNumber;
+
+                    while (true) {
+                        newPhoneNumber = ValidationUtil.getValidPhoneNumber(scanner);
+
+                        if (!isUPhoneTaken(newPhoneNumber)) {
+                            break; // 중복되지 않은 경우 루프 종료
+                        }
+
+                        System.out.println("The phone number is already in use by another user. Please use a different phone number.");
+                    }
                     query = "UPDATE User SET User_Phone = ? WHERE User_Id = ?";
                     pstmt = DatabaseUtil.getConnection().prepareStatement(query);
                     pstmt.setString(1, newPhoneNumber);
@@ -51,15 +64,21 @@ public class UserUpdateService {
                     pstmt = DatabaseUtil.getConnection().prepareStatement(query);
                     pstmt.setString(1, newEmail);
                     pstmt.setInt(2, AuthUtil.currentUserId);
-
                     break;
                 case 4:
                     System.out.print("Enter new Password: ");
                     String newPassword = scanner.nextLine().trim();
-                    query = "UPDATE User SET User_Password = ? WHERE User_Id = ?";
+
+                    // Generate a new salt and hash the password
+                    String newSalt = generateSalt();
+                    String hashedPassword = hashPassword(newPassword, newSalt);
+
+                    // Update the password and salt in the database
+                    query = "UPDATE User SET User_Password = ?, Salt = ? WHERE User_Id = ?";
                     pstmt = DatabaseUtil.getConnection().prepareStatement(query);
-                    pstmt.setString(1, newPassword);
-                    pstmt.setInt(2, AuthUtil.currentUserId);
+                    pstmt.setString(1, hashedPassword);
+                    pstmt.setString(2, newSalt);
+                    pstmt.setInt(3, AuthUtil.currentUserId);
                     break;
                 case 5:
                     System.out.println("Exiting update menu...");

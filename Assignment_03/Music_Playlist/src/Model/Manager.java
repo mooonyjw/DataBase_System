@@ -56,23 +56,6 @@ public class Manager {
         } while (choice != 6);
     }
 
-    private void addMusic() {
-        System.out.println("Adding new music...");
-        // Add database query logic
-    }
-
-    private void updateMusic() {
-        System.out.println("Updating music...");
-        // Add database query logic
-    }
-
-    private void deleteMusic() {
-        System.out.println("Deleting music...");
-        // Add database query logic
-    }
-
-
-
     public String getManagerName() {
         try {
             String query = "SELECT Manager_Name FROM Manager WHERE Manager_Id = ?";

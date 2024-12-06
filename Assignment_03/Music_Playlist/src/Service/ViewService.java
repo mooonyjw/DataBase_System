@@ -27,15 +27,25 @@ public class ViewService {
             case 1:
 
                 try {
-                    // 아티스트 이름을 대소문자 구분 없이 검색 (부분 일치)
+                    // 아티스트 목록을 데이터베이스에서 가져오기
                     String query = "SELECT * FROM Artist";
                     PreparedStatement pstmt = DatabaseUtil.getConnection().prepareStatement(query);
                     ResultSet rs = pstmt.executeQuery();
 
+                    // 헤더 출력
                     System.out.println("\n--- Artist List ---");
-                    System.out.println("Artist ID | Artist Name | Debut Date | Agency");
+                    System.out.printf("%-10s | %-20s | %-12s | %-20s%n", "Artist ID", "Artist Name", "Debut Date", "Agency");
+                    System.out.println("----------------------------------------------------------------------");
+
+                    // 데이터 출력
                     while (rs.next()) {
-                        System.out.println(rs.getInt("Artist_Id") + " | " + rs.getString("Artist_Name") + " | " + rs.getString("Debut_Date") + " | " + rs.getString("Agency"));
+                        System.out.printf(
+                                "%-10d | %-20s | %-12s | %-20s%n",
+                                rs.getInt("Artist_Id"),
+                                rs.getString("Artist_Name"),
+                                rs.getString("Debut_Date"),
+                                rs.getString("Agency")
+                        );
                     }
                 } catch (SQLException e) {
                     System.out.println("Error while printing: " + e.getMessage());
@@ -50,26 +60,22 @@ public class ViewService {
                     PreparedStatement pstmt = DatabaseUtil.getConnection().prepareStatement(query);
                     ResultSet rs = pstmt.executeQuery();
 
+                    // 헤더 출력
                     System.out.println("\n--- Album List ---");
-                    System.out.println("Album ID | Album Name | Total Tracks | Release Date | Artist ID");
-                    while (rs.next()) {
-                        System.out.println(rs.getInt("Album_Id") + " | " + rs.getString("Album_Name") + " | " + rs.getInt("Total_Tracks") + " | " + rs.getString("Release_Date") + " | " + rs.getInt("artistId"));
-                    }
-                } catch (SQLException e) {
-                    System.out.println("Error while printing: " + e.getMessage());
-                } catch (Exception e) {
-                    System.out.println("Unexpected error: " + e.getMessage());
-                }
-            case 3:
-                try {
-                    String query = "SELECT * FROM Music";
-                    PreparedStatement pstmt = DatabaseUtil.getConnection().prepareStatement(query);
-                    ResultSet rs = pstmt.executeQuery();
+                    System.out.printf("%-10s | %-20s | %-15s | %-12s | %-10s%n",
+                            "Album ID", "Album Name", "Total Tracks", "Release Date", "Artist ID");
+                    System.out.println("----------------------------------------------------------------------");
 
-                    System.out.println("\n--- Music List ---");
-                    System.out.println("Music Id | Title | Length | Manager Id | Album ID | Genre ID");
+                    // 데이터 출력
                     while (rs.next()) {
-                        System.out.println(rs.getInt("Music_Id") + " | " + rs.getString("Title") + " | " + rs.getInt("Length") + " | " + rs.getInt("managerId") + " | " + rs.getInt("albumId") + " | " + rs.getInt("genreId"));
+                        System.out.printf(
+                                "%-10d | %-30s | %-15d | %-12s | %-10d%n",
+                                rs.getInt("Album_Id"),
+                                rs.getString("Album_Name"),
+                                rs.getInt("Total_Tracks"),
+                                rs.getString("Release_Date"),
+                                rs.getInt("artistId")
+                        );
                     }
                 } catch (SQLException e) {
                     System.out.println("Error while printing: " + e.getMessage());
@@ -78,16 +84,57 @@ public class ViewService {
                 }
 
                 break;
+
+            case 3:
+                try {
+                    String query = "SELECT * FROM Music";
+                    PreparedStatement pstmt = DatabaseUtil.getConnection().prepareStatement(query);
+                    ResultSet rs = pstmt.executeQuery();
+
+                    // 헤더 출력
+                    System.out.println("\n--- Music List ---");
+                    System.out.printf("%-10s | %-30s | %-10s | %-12s | %-10s | %-10s%n",
+                            "Music ID", "Title", "Length", "Manager ID", "Album ID", "Genre ID");
+                    System.out.println("------------------------------------------------------------------------------------------");
+
+                    // 데이터 출력
+                    while (rs.next()) {
+                        System.out.printf(
+                                "%-10d | %-30s | %-10d | %-12d | %-10d | %-10d%n",
+                                rs.getInt("Music_Id"),
+                                rs.getString("Title"),
+                                rs.getInt("Length"),
+                                rs.getInt("managerId"),
+                                rs.getInt("albumId"),
+                                rs.getInt("genreId")
+                        );
+                    }
+                } catch (SQLException e) {
+                    System.out.println("Error while printing: " + e.getMessage());
+                } catch (Exception e) {
+                    System.out.println("Unexpected error: " + e.getMessage());
+                }
+
+
+                break;
             case 4:
                 try {
                     String query = "SELECT * FROM Genre";
                     PreparedStatement pstmt = DatabaseUtil.getConnection().prepareStatement(query);
                     ResultSet rs = pstmt.executeQuery();
 
+                    // 헤더 출력
                     System.out.println("\n--- Genre List ---");
-                    System.out.println("Genre Id | Genre Name");
+                    System.out.printf("%-10s | %-20s%n", "Genre ID", "Genre Name");
+                    System.out.println("----------------------------------");
+
+                    // 데이터 출력
                     while (rs.next()) {
-                        System.out.println(rs.getInt("Genre_Id") + " | " + rs.getString("Genre_Name"));
+                        System.out.printf(
+                                "%-10d | %-20s%n",
+                                rs.getInt("Genre_Id"),
+                                rs.getString("Genre_Name")
+                        );
                     }
                 } catch (SQLException e) {
                     System.out.println("Error while printing: " + e.getMessage());

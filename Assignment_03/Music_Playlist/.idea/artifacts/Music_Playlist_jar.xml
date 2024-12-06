@@ -1,0 +1,11 @@
+<component name="ArtifactManager">
+  <artifact build-on-make="true" name="Music_Playlist:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/Music_Playlist_jar</output-path>
+    <root id="root">
+      <element id="archive" name="Music_Playlist.jar">
+        <element id="module-output" name="Music_Playlist" />
+      </element>
+      <element id="library" level="project" name="mysql-connector-j-9.1.0" />
+    </root>
+  </artifact>
+</component>

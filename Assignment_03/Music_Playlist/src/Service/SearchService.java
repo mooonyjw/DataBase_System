@@ -184,7 +184,7 @@ public class SearchService {
             String musicName;
             while (true) {
                 System.out.print("Enter Music Name: ");
-                musicName = scanner.nextLine().trim();
+                musicName = scanner.nextLine().trim();  // 양쪽 공백 제거
 
                 // 입력값 검증
                 if (musicName.isEmpty()) {

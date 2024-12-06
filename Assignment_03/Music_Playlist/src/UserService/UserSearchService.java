@@ -208,7 +208,7 @@ public class UserSearchService {
 
             // 결과 출력
             System.out.println("\n--- Music Results ---");
-            System.out.printf("%-5s | %-30s | %-15s | %-20s%n", "No.", "Title", "Length (seconds)", "Artist");
+            System.out.printf("%-5s | %-30s | %-16s | %-20s%n", "No.", "Title", "Length (seconds)", "Artist");
             System.out.println("---------------------------------------------------------------------------");
 
             Map<Integer, Integer> searchResults = new HashMap<>();

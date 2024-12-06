@@ -73,63 +73,68 @@ public class PlaylistService {
     private String searchAndAddMusic() {
         Scanner scanner = new Scanner(System.in);
 
-        // 음악 검색
-        System.out.print("Enter a song title to search: ");
-        String searchKeyword = scanner.nextLine().trim();
+        while (true) {
+            // 음악 검색
+            System.out.print("Enter a song title to search (or press ENTER to cancel): ");
+            String searchKeyword = scanner.nextLine().trim();
 
-        try {
-            String searchQuery = "SELECT Music_Id, Title FROM Music WHERE Title LIKE ?";
-            PreparedStatement pstmt = DatabaseUtil.getConnection().prepareStatement(searchQuery);
-            pstmt.setString(1, "%" + searchKeyword + "%");
-            ResultSet rs = pstmt.executeQuery();
-
-            // 검색 결과 출력
-            System.out.println("\n--- Search Results ---");
-            System.out.printf("%-5s | %-30s%n", "No.", "Title");
-            System.out.println("-------------------------------------------");
-
-            Map<Integer, Integer> searchResults = new HashMap<>();
-            int index = 1; // 순서 번호
-
-            while (rs.next()) {
-                int musicId = rs.getInt("Music_Id");
-                searchResults.put(index, musicId); // 인덱스와 Music_Id 매핑
-                System.out.printf("%-5d | %-30s%n", index, rs.getString("Title"));
-                index++;
-            }
-
-            // 검색 결과가 없을 경우 처리
-            if (searchResults.isEmpty()) {
-                System.out.println("No results found for your search.");
-                return null;
-            }
-
-            // 곡 선택
-            System.out.print("Enter the number of the song you want to add (or press ENTER to cancel): ");
-            String userInput = scanner.nextLine().trim();
-
-            if (userInput.isEmpty()) {
+            if (searchKeyword.isEmpty()) {
+                System.out.println("Search cancelled.");
                 return null; // 취소 처리
             }
 
             try {
-                int userChoice = Integer.parseInt(userInput);
-                if (searchResults.containsKey(userChoice)) {
-                    return String.valueOf(searchResults.get(userChoice)); // 선택한 Music_Id 반환
-                } else {
-                    System.out.println("Invalid selection. Please try again.");
-                    return null;
+                String searchQuery = "SELECT Music_Id, Title FROM Music WHERE Title LIKE ?";
+                PreparedStatement pstmt = DatabaseUtil.getConnection().prepareStatement(searchQuery);
+                pstmt.setString(1, "%" + searchKeyword + "%");
+                ResultSet rs = pstmt.executeQuery();
+
+                // 검색 결과 출력
+                System.out.println("\n--- Search Results ---");
+                System.out.printf("%-5s | %-30s%n", "No.", "Title");
+                System.out.println("-------------------------------------------");
+
+                Map<Integer, Integer> searchResults = new HashMap<>();
+                int index = 1; // 순서 번호
+
+                while (rs.next()) {
+                    int musicId = rs.getInt("Music_Id");
+                    searchResults.put(index, musicId); // 인덱스와 Music_Id 매핑
+                    System.out.printf("%-5d | %-30s%n", index, rs.getString("Title"));
+                    index++;
                 }
-            } catch (NumberFormatException e) {
-                System.out.println("Invalid input. Please enter a valid number.");
+
+                // 검색 결과가 없을 경우 처리
+                if (searchResults.isEmpty()) {
+                    System.out.println("No results found for your search. Please try again.");
+                    continue; // 루프 반복으로 다시 검색
+                }
+
+                // 곡 선택
+                System.out.print("Enter the number of the song you want to add (or press ENTER to cancel): ");
+                String userInput = scanner.nextLine().trim();
+
+                if (userInput.isEmpty()) {
+                    System.out.println("Selection cancelled.");
+                    return null; // 선택 취소 처리
+                }
+
+                try {
+                    int userChoice = Integer.parseInt(userInput);
+                    if (searchResults.containsKey(userChoice)) {
+                        return String.valueOf(searchResults.get(userChoice)); // 선택한 Music_Id 반환
+                    } else {
+                        System.out.println("Invalid selection. Please try again.");
+                    }
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid input. Please enter a valid number.");
+                }
+
+            } catch (Exception e) {
+                System.out.println("Error while searching for music: " + e.getMessage());
                 return null;
             }
-
-        } catch (Exception e) {
-            System.out.println("Error while searching for music: " + e.getMessage());
         }
-
-        return null;
     }
 
 
@@ -198,7 +203,7 @@ public class PlaylistService {
             rs = pstmt.executeQuery();
 
             System.out.println("\n--- Playlist Songs ---");
-            System.out.printf("%-5s | %-30s | %-16s | %-20s | %-20s%n", "No.", "Title", "Length (seconds)", "Album", "Artist");
+            System.out.printf("%-5s | %-30s | %-17s | %-20s | %-20s%n", "No.", "Title", "Length (seconds)", "Album", "Artist");
             System.out.println("--------------------------------------------------------------------------------------------");
 
             if (!rs.isBeforeFirst()) { // 플레이리스트에 곡이 없는 경우
